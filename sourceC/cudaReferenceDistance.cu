@@ -2,18 +2,18 @@
 #include<omp.h>
 #include"globals.h"
 #define THREADSREF 128
-__global__ void kernelCalcInvSquare(real *const references, real *const invSquare, int mReferences, int nReferences) {
-	volatile __shared__ real values[128];
+__global__ void kernelCalcInvSquare(float *const references, float *const invSquare, int mReferences, int nReferences) {
+	volatile __shared__ float values[128];
 	int index = blockIdx.x*nReferences + threadIdx.x;
-	register real partial;
+	register float partial;
 
 	if( threadIdx.x < nReferences ) {
-		real value = references[index];
+		float value = references[index];
 		partial = value * value;
 		for(int id = 128; id < nReferences; id+=128) {
 			if( threadIdx.x + id < nReferences ) {
 				index += 128;
-				real value = references[index];
+				float value = references[index];
 				partial += value * value;
 			}
 		}
@@ -39,18 +39,18 @@ __global__ void kernelCalcInvSquare(real *const references, real *const invSquar
 		}
 	}
 }
-__global__ void kernelCalcSquare(real * const references, real * const square, int mReferences, int nReferences) {
-	volatile __shared__ real values[128];
+__global__ void kernelCalcSquare(float * const references, float * const square, int mReferences, int nReferences) {
+	volatile __shared__ float values[128];
 	int index = blockIdx.x*nReferences + threadIdx.x;
-	register real partial;
+	register float partial;
 
 	if( threadIdx.x < nReferences ) {
-		real value = references[index];
+		float value = references[index];
 		partial = value * value;
 		for(int id = 128; id < nReferences; id+=128) {
 			if( threadIdx.x + id < nReferences ) {
 				index += 128;
-				real value = references[index];
+				float value = references[index];
 				partial += value * value;
 			}
 		}
@@ -76,27 +76,27 @@ __global__ void kernelCalcSquare(real * const references, real * const square, i
 	}
 }
 //sprawdzic inne konfiguracje liczby watkow i pamieci shaaared
-__global__ void __launch_bounds__(THREADSREF, 8) kernelReferenceDistance(real const * const references, real const * const patterns, real const * const square, real const * const pSquare, real * const err, int const nPatterns, int const nReferences,int const mReferences) {
-	volatile __shared__ real pr[THREADSREF];
-	volatile __shared__ real pr2[THREADSREF];
-	volatile __shared__ real pr3[THREADSREF];
-	volatile __shared__ real pr4[THREADSREF];
+__global__ void __launch_bounds__(THREADSREF, 8) kernelReferenceDistance(float const * const references, float const * const patterns, float const * const square, float const * const pSquare, float * const err, int const nPatterns, int const nReferences,int const mReferences) {
+	volatile __shared__ float pr[THREADSREF];
+	volatile __shared__ float pr2[THREADSREF];
+	volatile __shared__ float pr3[THREADSREF];
+	volatile __shared__ float pr4[THREADSREF];
 	register int indexPatterns = blockIdx.x * nPatterns  + threadIdx.x;
 	register int indexReferences = (4*blockIdx.y) * nReferences  + threadIdx.x;
 	register int indexReferences2 = indexReferences + nReferences ;//(4*blockIdx.y+1) * nReferences  + threadIdx.x;
 	register int indexReferences3 = indexReferences2 + nReferences;//(4*blockIdx.y+2) * nReferences  + threadIdx.x;
 	register int indexReferences4 = indexReferences3 + nReferences ;//(4*blockIdx.y+3) * nReferences  + threadIdx.x;
-	register real prPartial;
-	register real prPartial2;
-	register real prPartial3;
-	register real prPartial4;
+	register float prPartial;
+	register float prPartial2;
+	register float prPartial3;
+	register float prPartial4;
 
 	if( threadIdx.x < nPatterns ) {
-		real p = patterns[indexPatterns];
-		real r = references[indexReferences];
-		real r2 = references[indexReferences2];
-		real r3 = references[indexReferences3];
-		real r4 = references[indexReferences4];
+		float p = patterns[indexPatterns];
+		float r = references[indexReferences];
+		float r2 = references[indexReferences2];
+		float r3 = references[indexReferences3];
+		float r4 = references[indexReferences4];
 		prPartial = p*r;
 		prPartial2 = p*r2;
 		prPartial3 = p*r3;
@@ -180,33 +180,33 @@ __global__ void __launch_bounds__(THREADSREF, 8) kernelReferenceDistance(real co
 	}
 }
 
-void cudaReferenceDistance(real ** err, real const * const patterns, real const * const references, int const mPatterns, int const nPatterns, int const mReferences, int const nReferences) {
-	real * devReferences;
-	real * devErr;
-	real * devPatterns;
-	real * devInvRSquare;
-	real * devPSquare;
-	cudaError(cudaMalloc((void**)&devPatterns, mPatterns*nPatterns*sizeof(real)));
-	cudaError(cudaMalloc((void**)&devReferences,mReferences*nReferences*sizeof(real)));
-	cudaError(cudaMalloc((void**)&devInvRSquare, mReferences*sizeof(real)));
-	cudaError(cudaMalloc((void**)&devPSquare, mPatterns*sizeof(real)));
+void cudaReferenceDistance(float ** err, float const * const patterns, float const * const references, int const mPatterns, int const nPatterns, int const mReferences, int const nReferences) {
+	float * devReferences;
+	float * devErr;
+	float * devPatterns;
+	float * devInvRSquare;
+	float * devPSquare;
+	cudaError(cudaMalloc((void**)&devPatterns, mPatterns*nPatterns*sizeof(float)));
+	cudaError(cudaMalloc((void**)&devReferences,mReferences*nReferences*sizeof(float)));
+	cudaError(cudaMalloc((void**)&devInvRSquare, mReferences*sizeof(float)));
+	cudaError(cudaMalloc((void**)&devPSquare, mPatterns*sizeof(float)));
 	//printf("%d %d %d\n", mPatterns, mReferences, nPatterns);
 
-	cudaError(cudaMemcpy(devReferences, references,mReferences*nReferences*sizeof(real), cudaMemcpyHostToDevice));
-	cudaError(cudaMemcpy(devPatterns, patterns, mPatterns*nPatterns*sizeof(real), cudaMemcpyHostToDevice));
+	cudaError(cudaMemcpy(devReferences, references,mReferences*nReferences*sizeof(float), cudaMemcpyHostToDevice));
+	cudaError(cudaMemcpy(devPatterns, patterns, mPatterns*nPatterns*sizeof(float), cudaMemcpyHostToDevice));
 
 	cudaFuncSetCacheConfig(kernelCalcInvSquare, cudaFuncCachePreferL1);
 	kernelCalcInvSquare<<< mReferences, 128>>>(devReferences, devInvRSquare, mReferences, nReferences);
 	cudaFuncSetCacheConfig(kernelCalcSquare, cudaFuncCachePreferL1);
 	kernelCalcSquare<<< mPatterns, 128>>>(devPatterns, devPSquare, mPatterns, nPatterns);
-	cudaError(cudaMalloc((void**)&devErr, mPatterns*mReferences*sizeof(real)));
+	cudaError(cudaMalloc((void**)&devErr, mPatterns*mReferences*sizeof(float)));
 
 	cudaFuncSetCacheConfig(kernelReferenceDistance, cudaFuncCachePreferL1);
 	//printf("%d %d %d %d\n", mPatterns, nPatterns, mReferences, nReferences);
 	kernelReferenceDistance<<<dim3(mPatterns, mReferences/4, 1),THREADSREF>>>(devReferences, devPatterns, devInvRSquare, devPSquare, devErr, nPatterns, nReferences, mReferences);
 
-	cudaError(cudaMallocHost((void**)err, mPatterns*mReferences*sizeof(real)));
-	cudaError(cudaMemcpy(*err, devErr, mPatterns*mReferences*sizeof(real), cudaMemcpyDeviceToHost));
+	cudaError(cudaMallocHost((void**)err, mPatterns*mReferences*sizeof(float)));
+	cudaError(cudaMemcpy(*err, devErr, mPatterns*mReferences*sizeof(float), cudaMemcpyDeviceToHost));
 	cudaError(cudaFree(devInvRSquare));
 	cudaError(cudaFree(devPSquare));
 	cudaError(cudaFree(devErr));

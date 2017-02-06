@@ -1,4 +1,4 @@
-#include<complex.h>
+#include<complex>
 #include<cstdio>
 #include<cmath>
 #include<omp.h>
@@ -8,106 +8,107 @@
 #include"cudaGenerate.h"
 #include"globals.h"
 
-inline void GeneratePatternPT(int sizeTheta, real *  II, real *  r, int sizeR, real complex m, real *  pii, real *  tau,
-		const int nPiiTau , real wavelength, int polarization, int pattern_length) {
+
+inline void GeneratePatternPT(int sizeTheta, float *  II, float *  r, int sizeR, std::complex<float> m, float *  pii, float *  tau,
+		const int nPiiTau , float wavelength, int polarization, int pattern_length) {
 	//srand(time(NULL));
 	int offset=0;
-	const real invWavelength=1.0/wavelength;
-	//	int offset = (rand()/(real)RAND_MAX)*(real)(nPiiTau - pattern_length+1);
+	const float invWavelength=1.0/wavelength;
+	//	int offset = (rand()/(float)RAND_MAX)*(float)(nPiiTau - pattern_length+1);
 
-	int realImagSize = nPiiTau*sizeR;
-	real *  aReal = new real[realImagSize];
-	real *  bReal = new real[realImagSize];
-	real *  aImag = new real[realImagSize];
-	real *  bImag = new real[realImagSize];
-	real *  k     = new real[nPiiTau];
-	real * correctedR = new real[sizeR];
+	int floatImagSize = nPiiTau*sizeR;
+	float *  afloat = new float[floatImagSize];
+	float *  bfloat = new float[floatImagSize];
+	float *  aImag = new float[floatImagSize];
+	float *  bImag = new float[floatImagSize];
+	float *  k     = new float[nPiiTau];
+	float * correctedR = new float[sizeR];
 	int * nMax = new int[sizeR];
 
 #pragma omp parallel shared(sizeR, correctedR, r, k, nMax) default(none) 
 	{
 #pragma omp for nowait
 	for(int j=0;j<nPiiTau;j++)
-		k[j] = (2*j+3)/(real)( (j+1)*(j+2));
+		k[j] = (2*j+3)/(float)( (j+1)*(j+2));
 #pragma omp for
 	for(int j=0;j<sizeR;j++)
 		correctedR[j]=r[j]*2.0*M_PI*invWavelength;
 #pragma omp for nowait
 	for(int j=0;j<sizeR;j++)
-		nMax[j] = (int)ceil(correctedR[j]+4.0*pow(correctedR[j], (real)1/3)+2.0);
+		nMax[j] = (int)ceil(correctedR[j]+4.0*pow(correctedR[j], (float)1/3)+2.0);
 	}
 
-	calculateMieAB(nMax, nPiiTau, sizeR, m, correctedR, aReal, aImag, bReal, bImag);
+	calculateMieAB(nMax, nPiiTau, sizeR, m, correctedR, afloat, aImag, bfloat, bImag);
 #pragma omp parallel for
 	for(int i=0;i<sizeR;i++) { 
 		for(int j=0;j<nMax[i];j++) {
 			int index = i*nPiiTau+j;
-			aReal[index]*=k[j];
-			bReal[index]*=k[j];
+			afloat[index]*=k[j];
+			bfloat[index]*=k[j];
 			aImag[index]*=k[j]; 
 			bImag[index]*=k[j];
 		}
 	}
 #ifdef CUDA
-	if(polarization==0) cudaGenerate(sizeR, pattern_length, nMax, pii, nPiiTau, tau, aReal, aImag, bReal, bImag, II );
-	else                cudaGenerate(sizeR, pattern_length, nMax, tau, nPiiTau, pii, aReal, aImag, bReal, bImag, II );
+	if(polarization==0) cudaGenerate(sizeR, pattern_length, nMax, pii, nPiiTau, tau, afloat, aImag, bfloat, bImag, II );
+	else                cudaGenerate(sizeR, pattern_length, nMax, tau, nPiiTau, pii, afloat, aImag, bfloat, bImag, II );
 #endif
 
 #ifndef CUDA
 	if(polarization==0){
-#pragma omp parallel for default(none) shared(sizeR, pattern_length, aReal, aImag, bReal, bImag, pii, tau, nMax, II)
+#pragma omp parallel for default(none) shared(sizeR, pattern_length, afloat, aImag, bfloat, bImag, pii, tau, nMax, II)
 		for(int i=0;i<sizeR;i++)
 			for(int j=0;j<pattern_length;j++) {
-				real realProduct = (real)0.0;
-				real imagProduct = (real)0.0;
+				float floatProduct = (float)0.0;
+				float imagProduct = (float)0.0;
 				for(int kk=0;kk<nMax[i];++kk) {
 					const int index = j*nPiiTau+kk;
-					realProduct += aReal[i*nPiiTau+kk]*pii[index] + bReal[i*nPiiTau+kk]*tau[index];
+					floatProduct += afloat[i*nPiiTau+kk]*pii[index] + bfloat[i*nPiiTau+kk]*tau[index];
 					imagProduct += aImag[i*nPiiTau+kk]*pii[index] + bImag[i*nPiiTau+kk]*tau[index];
 				}
-				II[i*pattern_length+j]= realProduct*realProduct + imagProduct*imagProduct;
+				II[i*pattern_length+j]= floatProduct*floatProduct + imagProduct*imagProduct;
 			}
 	}
 	if(polarization==1){
-#pragma omp parallel for default(none) shared(sizeR, pattern_length, aReal, aImag, bReal, bImag, pii, tau, nMax, II)
+#pragma omp parallel for default(none) shared(sizeR, pattern_length, afloat, aImag, bfloat, bImag, pii, tau, nMax, II)
 		for(int i=0;i<sizeR;i++)
 			for(int j=0;j<pattern_length;j++) {
-				real realProduct = 0.0;
-				real imagProduct = 0.0;
+				float floatProduct = 0.0;
+				float imagProduct = 0.0;
 				for(int kk=0;kk<nMax[i];++kk) {
 					const int index = j*nPiiTau+kk;
 					const int index2 = i*nPiiTau+kk;
-					realProduct += aReal[index2]*tau[index] + bReal[index2]*pii[index];
+					floatProduct += afloat[index2]*tau[index] + bfloat[index2]*pii[index];
 					imagProduct += aImag[index2]*tau[index] + bImag[index2]*pii[index];
 				}
-				II[i*pattern_length+j]= realProduct*realProduct + imagProduct*imagProduct;
+				II[i*pattern_length+j]= floatProduct*floatProduct + imagProduct*imagProduct;
 			}
 	}
 #endif
 	delete [] nMax;
-	delete [] aReal;
-	delete [] bReal;
+	delete [] afloat;
+	delete [] bfloat;
 	delete [] aImag;
 	delete [] bImag;
 	delete [] k;
 	delete [] correctedR;
 }
-void GeneratePattern(real *  II, real *  r, const int sizeR, real complex m,
-		real *  theta,const int sizeTheta ,real redWavelength, real greenWavelength, int polarization ,int pattern_length) {
-	real maxR=0.0;
+void GeneratePattern(float *  II, float *  r, const int sizeR, std::complex<float> m,
+		float *  theta,const int sizeTheta ,float redWavelength, float greenWavelength, int polarization ,int pattern_length) {
+	float maxR=0.0;
 	for(int i=0; i< sizeR; i++) 
 		if( r[i] > maxR ) maxR=r[i];
-	real maxDiffractionParam;
+	float maxDiffractionParam;
 	if ( polarization == 0)
 		maxDiffractionParam=maxR*2.0*M_PI/redWavelength;
 	if (polarization == 1)
 		maxDiffractionParam=maxR*2.0*M_PI/greenWavelength;
-	const int nMax=(int)ceil(maxDiffractionParam+4.0*pow(maxDiffractionParam, (real)1/3)+2.0);
-	real *  u= new real[sizeTheta];
+	const int nMax=(int)ceil(maxDiffractionParam+4.0*pow(maxDiffractionParam, (float)1/3)+2.0);
+	float *  u= new float[sizeTheta];
 	for(int i=0;i<sizeTheta;++i)
 		u[i]=cos(theta[i]);
-	real *  p =new real[sizeTheta*nMax];
-	real *  t =new real[sizeTheta*nMax];
+	float *  p =new float[sizeTheta*nMax];
+	float *  t =new float[sizeTheta*nMax];
 	calculateMiePT(sizeTheta, nMax, u, p, t);
 	if( polarization==0 ) 
 		GeneratePatternPT(sizeTheta, II, r, sizeR, m, p, t, nMax, redWavelength, 0, pattern_length); 

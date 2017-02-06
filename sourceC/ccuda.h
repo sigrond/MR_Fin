@@ -1,2 +1,2 @@
-void freeCudaPointer(real ** pointer);
-void allocCudaPointer(real ** pointer, size_t size);
+void freeCudaPointer(float ** pointer);
+void allocCudaPointer(float ** pointer, size_t size);

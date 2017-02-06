@@ -1,9 +1,10 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+//#include <sys/types.h>
+//#include <sys/socket.h>
+//#include <sys/un.h>
+#include <WinSock2.h>
+#include <cstdio>
+#include <cstdlib>
+//#include <unistd.h>
 #include "mainFunction.h"
 #include "omp.h"
 
@@ -13,9 +14,9 @@
 int main()
 {
 	int sock, msgsock, rval;
-	struct sockaddr_un server;
+	struct sockaddr server;
 	char buf[1024];
-	int dummy;
+	char dummy[4];
 
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -23,10 +24,10 @@ int main()
 		perror("opening stream socket");
 		exit(1);
 	}
-	server.sun_family = AF_UNIX;
-	strcpy(server.sun_path, NAME);
+	//server.sun_family = AF_UNIX;
+	//strcpy(server.sun_path, NAME);
 	unlink(NAME);
-	if (bind(sock, (struct sockaddr *) &server, sizeof(struct sockaddr_un))) {
+	if (bind(sock, (struct sockaddr *) &server, sizeof(struct sockaddr))) {
 		perror("binding stream socket");
 		exit(1);
 	}
@@ -37,8 +38,9 @@ int main()
 		if (msgsock == -1)
 			perror("accept");
 		else do {
-			bzero(buf, sizeof(buf));
-			if ((rval = read(msgsock, buf, 1024)) < 0)
+			//bzero(buf, sizeof(buf));
+			memset(buf, 0, sizeof(buf));
+			if ((rval = recv(msgsock, buf, 1024,0)) < 0)
 				perror("reading stream message");
 			else if (rval == 0)
 				printf("Ending connection\n");
@@ -46,13 +48,13 @@ int main()
 				double init = omp_get_wtime();
 				mainFunction();
 				printf("%f LACZNY CZAS\n", omp_get_wtime() - init);
-				if (write(msgsock, &dummy, sizeof(int)) < 0 )
+				if (send(msgsock, dummy, sizeof(int),0) < 0 )
 					perror("error writing stream socket");
 				}
 		} while (rval > 0);
-		close(msgsock);
+		closesocket(msgsock);
 	}
-	close(sock);
+	closesocket(sock);
 	unlink(NAME);
 	return 0;
 }

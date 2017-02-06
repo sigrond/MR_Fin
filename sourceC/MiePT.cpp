@@ -5,12 +5,12 @@
 #include<omp.h>
 #endif
 
-void calculateMiePT(int col, int nmax, real * u, real * p, real * t) {
-	real aux[nmax+1];
-	real aux2[nmax+1];
+void calculateMiePT(int col, int nmax, float * u, float * p, float * t) {
+	float *aux=new float[nmax+1];
+	float *aux2=new float[nmax+1];
 	for(int i=3; i<=nmax; i++){
-		aux2[i] = (real)(i)/(i-1);
-		aux[i]=(real)(2*i-1)/(i-1);
+		aux2[i] = (float)(i)/(i-1);
+		aux[i]=(float)(2*i-1)/(i-1);
 	}
 	for (int j = 0;j < col;j++ ) {
 		int index1=j*nmax;
