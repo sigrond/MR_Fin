@@ -1,7 +1,11 @@
 //#include <sys/types.h>
 //#include <sys/socket.h>
 //#include <sys/un.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <WinSock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
 #include <cstdio>
 #include <cstdlib>
 //#include <unistd.h>
@@ -10,37 +14,81 @@
 
 #define NAME ".socket"
 
+#define DEFAULT_PORT "27015"
+
 
 int main()
 {
 	int sock, msgsock, rval;
-	struct sockaddr server;
+	//struct sockaddr server;
 	char buf[1024];
 	char dummy[4];
 
+	WSADATA wsaData;
+	int iResult;
+	// Initialize Winsock
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0)
+	{
+		printf("WSAStartup failed: %d\n", iResult);
+		return 1;
+	}
 
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0) {
-		perror("opening stream socket");
-		exit(1);
+	struct addrinfo *result = NULL, *ptr = NULL, hints;
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE;
+
+	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+	if (iResult != 0) {
+		printf("getaddrinfo failed with error: %d\n", iResult);
+		WSACleanup();
+		return 1;
+	}
+
+	sock = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	if (sock == INVALID_SOCKET)
+	{
+		printf("Error at socket(): %ld\n", WSAGetLastError());
+		freeaddrinfo(result);
+		WSACleanup();
+		return 1;
 	}
 	//server.sun_family = AF_UNIX;
 	//strcpy(server.sun_path, NAME);
-	unlink(NAME);
-	if (bind(sock, (struct sockaddr *) &server, sizeof(struct sockaddr))) {
-		perror("binding stream socket");
-		exit(1);
+	//unlink(NAME);
+	iResult = bind(sock, result->ai_addr, (int)result->ai_addrlen);
+	if (iResult == SOCKET_ERROR)
+	{
+		printf("bind failed with error: %d\n", WSAGetLastError());
+		freeaddrinfo(result);
+		closesocket(sock);
+		WSACleanup();
+		return 1;
 	}
+	freeaddrinfo(result);
 	//printf("Socket has name %s\n", server.sun_path);
-	listen(sock, 5);
+	//listen(sock, 5);
+	printf("listen...\n");
+	if (listen(sock, 5) == SOCKET_ERROR)
+	{
+		printf("Listen failed with error: %ld\n", WSAGetLastError());
+		closesocket(sock);
+		WSACleanup();
+		return 1;
+	}
 	for (;;) {
-		msgsock = accept(sock, 0, 0);
-		if (msgsock == -1)
+		msgsock = accept(sock, NULL, NULL);
+		if (msgsock == INVALID_SOCKET)
 			perror("accept");
 		else do {
 			//bzero(buf, sizeof(buf));
 			memset(buf, 0, sizeof(buf));
-			if ((rval = recv(msgsock, buf, 1024,0)) < 0)
+			rval = recv(msgsock, buf, 1024, 0);
+			if (rval == -1)
 				perror("reading stream message");
 			else if (rval == 0)
 				printf("Ending connection\n");
