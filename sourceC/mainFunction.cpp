@@ -6,6 +6,7 @@
 #include<algorithm>
 #include<omp.h>
 #include<cstring>
+#include<vector>
 #include"auxillary.h"
 #include"MiePT.h"
 #include"MieAB.h"
@@ -32,8 +33,14 @@ void mainFunction() {
 #endif
 	// Read data from files, size, ipp, iss, mTp, mTs, diafragma, hccd's
 	size_t dummy;
-	FILE * pFile;
+	FILE * pFile=NULL;
 	pFile = fopen("Cdata/setupMatlab","rb");
+	if (pFile == NULL)
+	{
+		printf("error opening setupMatlab\n");
+		system("dir");
+		return;
+	}
 	int mIpp, nIpp, mIss, nIss, sizeTp, sizeTs; //mIppi=mIss to liczba klatek filmu
 	float diafragma, hccd_max_G, hccd_max_R;
 	dummy=fread((void*)(&mIpp)  , sizeof(int), 1, pFile);
@@ -178,7 +185,8 @@ void mainFunction() {
 #endif 
 
 
-	std::complex<float> *m = new  std::complex<float>[rSize];
+	//std::complex<float> *m = new  std::complex<float>[rSize];
+	std::vector<std::complex<float> > m(rSize, std::complex<float>(0.0f, 0.0f));
 	GeneratePattern( Ittp, r, rSize, mR, Tp, sizeTp, wavelengthR, wavelengthG, 0, sizeTp);
 	GeneratePattern( Itts, r, rSize, mG, Ts, sizeTs, wavelengthR, wavelengthG, 1, sizeTs);
 	delete [] Tp;
@@ -383,5 +391,5 @@ void mainFunction() {
 	delete [] irms;
 	delete [] irm;
 	delete [] r;
-	delete [] m;
+	//delete [] m;
 }
