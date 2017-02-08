@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="..\auxillary.cpp" />
     <ClCompile Include="..\Calculate_m.cpp" />
-    <ClCompile Include="..\client.cpp" />
     <ClCompile Include="..\GeneratePattern.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\mainFunction.cpp" />
@@ -34,7 +33,6 @@
     <ClInclude Include="..\auxillary.h" />
     <ClInclude Include="..\Calculate_m.h" />
     <ClInclude Include="..\ccuda.h" />
-    <ClInclude Include="..\client.h" />
     <ClInclude Include="..\cudaGenerate.h" />
     <ClInclude Include="..\cudaReferenceDistance.h" />
     <ClInclude Include="..\GeneratePattern.h" />
@@ -54,6 +52,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E1A3E544-54A2-4ABC-9638-4874C67DBD38}</ProjectGuid>
     <RootNamespace>proj</RootNamespace>
+    <ProjectName>mrfin</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
