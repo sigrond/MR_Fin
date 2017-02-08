@@ -14,7 +14,7 @@ void calculateMieAB(int * nMaxTable, int nPiiTau, int sizeR, complex<float> m, f
 	vector<complex<float> > Theta(nPiiTau+1,complex<float>(0.0f, 0.0f));
 	vector<complex<float> > Eta(nPiiTau+1, complex<float>(0.0f, 0.0f));
 	vector<complex<float> > Psi(nPiiTau+1, complex<float>(0.0f, 0.0f));
-#pragma omp parallel for private(a, b, Theta, Eta, Psi) default(none) shared(sizeR, nMaxTable, x, m, afloat, nPiiTau, aImag, bfloat, bImag)
+#pragma omp parallel for firstprivate(a, b, Theta, Eta, Psi) default(none) shared(sizeR, nMaxTable, x, m, afloat, nPiiTau, aImag, bfloat, bImag)
 	for(int k=0;k<sizeR;k++) {
 		const complex<float> invM = 1.0f/m;
 		const complex<float> invX = 1.0f/x[k];
