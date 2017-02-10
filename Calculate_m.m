@@ -1,8 +1,5 @@
 function [ m ] = Calculate_m(Temperature,lambda, liquid)
 
-% EG, 2EG, 3EG, 4EG, DMI, DMSO, Benzonitryl, uPS, fSiO2, BK7, H2O, MetOH, EG+6G,
-% H2O+2EG, H2O+3EG, Au, Au r < 20[ nm ] (sic!)
-
 % lambda in nm
 % Temperature in deg Celsius
 
@@ -52,57 +49,14 @@ A1 = 8584;
 A2 = -485600000;
 m = -0.00044*(Temperature-T_ref)+A0+A1/lambda^2+A2/lambda^4;
 
-case 'Benzonitryl' %C6H5CN
-A0 = 1.496;
+case 'Glycerine'
+A0 = 1.45797;  
 % Cauchy dispersion parameters:
-A1 = 9863;
-A2 = 9.976E+7;
-m = -0.00026*(Temperature-T_ref)+A0+A1/lambda^2+A2/lambda^4;
-
-case 'Canola'
-% Rapeseed oil @22+/-6.5 deg.C
-% Cauchy dispersion parameters:
-A0=1.439298;
-A1=9339.331;
-A2=566636000;
-m = A0+A1/lambda^2+A2/lambda^4;
-
-case 'uPS'
-% PS microspheres @24 deg. C    
-% Cauchy dispersion parameters from Ma et al.:
-A0 = 1.5725;  
-A1 = 3108;
-A2 = 347790000;
-m = A0+A1/lambda^2+A2/lambda^4;
-
-case 'fSiO2'
-    %three term temperature-dependent effective Sellmeier model from
-    %Leviton et al.
-    TKelvin = Temperature+273.15;
-    lambda = lambda/1000;
-
-S1 = 1.10127 - TKelvin * 4.94251*10^(-5) + (TKelvin^2) * 5.27414*10^(-7) - (TKelvin^3) * 1.597*10^(-9) + (TKelvin^4) * 1.75949*10^(-12);
-S2 = 1.78752*10^(-5) + TKelvin * 4.76391*10^(-5) - (TKelvin^2) * 4.49019*10^(-7) + (TKelvin^3) * 1.44546*10^(-9) - (TKelvin^4) * 1.57223*10^(-12);
-S3 = 7.93552*10^(-1) - TKelvin * 1.27815*10^(-3) + (TKelvin^2) * 1.84595*10^(-5) - (TKelvin^3) * 9.20275*10^(-8) + (TKelvin^4) * 1.48829*10^(-10);
-
-lambda1 = -8.906*10^(-2) + TKelvin * 9.0873*10^(-6) - (TKelvin^2) * 6.53638*10^(-8) + (TKelvin^3) * 7.77072*10^(-11) + (TKelvin^4) * 6.84605*10^(-14);
-lambda2 = 2.97562*10^(-1) - TKelvin * 8.59578*10^(-4) + (TKelvin^2) * 6.59069*10^(-6) - (TKelvin^3) * 1.09482*10^(-8) + (TKelvin^4) * 7.85145*10^(-13);
-lambda3 = 9.34454 - TKelvin * 7.09788*10^(-3) + (TKelvin^2) * 1.01968*10^(-4) - (TKelvin^3) * 5.07660*10^(-7) + (TKelvin^4) * 8.21348*10^(-10);
-
-m = (1 + (S1*lambda^2)/(lambda^2 - lambda1^2) + (S2*lambda^2)/(lambda^2 - lambda2^2) + (S3*lambda^2)/(lambda^2 - lambda3^2))^0.5; 
-
-case 'BK7'
-%% wsp�czynniki dyspersji
-B1=1.03961212;
-B2=0.231792344;
-B3=1.01046945;
-C1=6.00069867e-3;
-C2=2.00179144e-2;
-C3=103.560653;
-lambda = lambda/1000;
-
-m = sqrt((B1*lambda^2)/(lambda^2-C1)+(B2*lambda^2)/(lambda^2-C2)+(B3*lambda^2)/(lambda^2-C3)+1);
-
+A1 = 5980;
+A2 = -360000000;
+    
+m = -0.00044*(Temperature-T_ref)+A0+A1/lambda^2+A2/lambda^4;
+    
 case 'H2O'
 % dispersion parameters for water:
 a0 = 0.244257733; 
@@ -141,21 +95,21 @@ F = Rho * (a0 + a1*Rho + a2*T_K/273.15 + a3*laser^2*T_K/273.15 + a4/laser^2 ...
 m = sqrt((2*F+1)/(1-F));
 
 % added by Tho Do Duc
-    case 'MetOH'
+    case 'Meth'
         % Cauchy dispersion parameters:
         A0=1.3195;
         A1=3053.64419;
         A2=-34163639.3011;
         A3=2.622128e+12;
         m=-0.00040*(Temperature-T_ref)+A0+A1/(lambda^2)+A2/(lambda^4)+A3/(lambda^6);
-    
+        
+
     case 'EG+6G'
         A0 = 1.4257;
         % Cauchy dispersion parameters EG+temperaturowa zaleznosc roztworu EG+6G:
         A1 = 1984.54821;
         A2 = 104174632; 
         m = -0.0003*(Temperature-T_ref)+A0+A1/lambda^2+A2/lambda^4;
-    
     case 'H2O+2EG'
         % dispersion parameters for water:
         a0 = 0.244257733;
@@ -198,7 +152,6 @@ m = sqrt((2*F+1)/(1-F));
         A2 = 104174632;
         mEG = -0.00026*(Temperature-T_ref)+A0+A1/lambda^2+A2/lambda^4;
         m = (mh + mEG)/2;
-       
        case 'H2O+3EG'
            A0 = 1.4492;
            % Cauchy dispersion parameters:
@@ -257,7 +210,6 @@ m = sqrt((2*F+1)/(1-F));
 %         eps_infty = 9.84;
 %         eps = eps_infty - ( omega_pl ^ 2 ) / ( omega^2 + complex(0,1) * gamma * omega );
 %         m = sqrt( eps );
-        
         case 'Au r < 20[ nm ]'
         c = 299792458;
         h = 6.6260755e-34;

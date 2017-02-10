@@ -22,7 +22,7 @@ function varargout = MRfin(varargin)
 
 % Edit the above text to modify the response to help MRfin
 
-% Last Modified by GUIDE v2.5 11-May-2015 13:27:10
+% Last Modified by GUIDE v2.5 11-Dec-2013 12:29:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -107,10 +107,19 @@ handles.Wg.theta = pi;
 
 handles.mr = Calculate_m(25,handles.Wr.wavelength,'EG');
 handles.mg = Calculate_m(25,handles.Wg.wavelength,'EG');
+
+
+handles.mr2 = Calculate_m(25,handles.Wr.wavelength,'EG');
+handles.mg2 = Calculate_m(25,handles.Wg.wavelength,'EG');
+
 handles.r = 1e3:20:15e3;
 handles.ind = 1:100:size( handles.Ipp,1 );
 set(handles.te_m_red,'string',['m_r = ' num2str( handles.mr )]);
 set(handles.te_m_green,'string',['m_g = ' num2str( handles.mg )]);
+
+set(handles.te_m_red2,'string',['m_r = ' num2str( handles.mr2 )]);
+set(handles.te_m_green2,'string',['m_g = ' num2str( handles.mg2 )]);
+
 set(handles.uipanel1,'title',handles.setup.FileName);
 if handles.C
     save_workspace;         % KOD C
@@ -353,8 +362,11 @@ end
 % --- Executes on button press in pbCalc.
 function pbCalc_Callback(hObject, eventdata, handles)
 % ======= Calc ==========================
-
+handles.C = 0;
 if handles.C
+    
+    externalM = get(handles.ch2refInd,'Value');
+    
     save_setup; %KOD DO C
     TT=tic;
     [status,result] = system('./client .socket','-echo'); %KOD DO C
@@ -365,8 +377,14 @@ if ~handles.C
     TTTT=tic;
     ppp=tic;
     
-    Ittp = GeneratePattern( handles.r,handles.mr,handles.Tp,handles.Wr );
+    Ittp = GeneratePattern( handles.r, handles.mr,handles.Tp, handles.Wr );
     Itts = GeneratePattern( handles.r, handles.mg, handles.Ts, handles.Wg );
+    
+    %m_red = maxGarnett(handles.r);                                                  % !!!!!!!!!!!
+    %Ittp = GeneratePattern( handles.r,m_red,handles.Tp,handles.Wr );                % !!!!!!!!!!!
+
+    %m_green = maxGarnett(handles.r);                                                % !!!!!!!!!!!
+    %Itts = GeneratePattern( handles.r, m_green, handles.Ts, handles.Wg );           % !!!!!!!!!!!
     
     CzasGenerate=toc(ppp)
     
@@ -442,20 +460,34 @@ if handles.C
    import_results;
 end
 
+% ====== Create time vector ===============
+
+fps = str2num( get( handles.edFps,'string' ) );
+frame_step = str2num( get( handles.edFrame_Step,'string' ) );
+dt = frame_step / fps;
+rNum = length(handles.ind);
+time = [0:dt:(rNum-1)*dt]';
+
+handles.time = time;
+guidata(hObject,handles);
 
 % ======= Draw ==========================
 hf =  figure;
+
+handles.current_figure = hf;
+guidata(hObject, handles);
+
 axes;
 if get(handles.cbRed,'value')
-    plot( res.rr ,'r.', 'MarkerSize', 5 );
+    plot( time, res.rr ,'r.', 'MarkerSize', 6 );
     grid on;
 end
 %=================== fitt preview ====================================
 if 1==0
     for ii = 1:size(handles.Ipp(handles.ind,:),1);
-        plot( handles.Tp,handles.Ipp( ii,: ) );%,theta.mTs(nom),Iss(ii,nom));grid on;
+        plot( time, handles.Tp,handles.Ipp( ii,: ) );%,theta.mTs(nom),Iss(ii,nom));grid on;
         hold on; grid on;
-        plot(handles.Tp, Ittp( irmp( ii ), : )* scalep( ii,irmp( ii ) ) ,'r');
+        plot(time, handles.Tp, Ittp( irmp( ii ), : )* scalep( ii,irmp( ii ) ) ,'r');
         hold off;
         pause( 0.1 );
     end
@@ -464,7 +496,7 @@ end
 if get(handles.cbGreen,'value')
     figure( hf );
     hold on;
-    plot( res.rg, 'g.', 'MarkerSize', 5);
+    plot( time, res.rg, 'g.', 'MarkerSize', 6);
     grid on;
 end
 s = sprintf(['Scale = %s \n'...
@@ -486,9 +518,9 @@ legend(s);
 %=================== fitt preview ====================================
 if 1==0
     for ii = 1:size(handles.Iss(handles.ind,:),1);
-        plot( handles.Ts,handles.Iss( ii,: ) );%,theta.mTs(nom),Iss(ii,nom));grid on;
+        plot( time, handles.Ts,handles.Iss( ii,: ) );%,theta.mTs(nom),Iss(ii,nom));grid on;
         hold on; grid on;
-        plot(handles.Ts, Itts( irms( ii ), : )* scales( ii,irms( ii ) ) ,'r');
+        plot(time, handles.Ts, Itts( irms( ii ), : )* scales( ii,irms( ii ) ) ,'r');
         hold off;
         pause( 0.5 );
     end
@@ -497,7 +529,7 @@ end
 if get(handles.cbBlue,'value')
     figure( hf );
     figure(hf);
-    plot( res.r,'.b' );
+    plot( time, res.r,'.b' );
     grid on;
     hold off;
 end
@@ -625,3 +657,247 @@ function uipanel1_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to uipanel1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+
+% --- Executes on button press in pushbutton5.
+function pushbutton5_Callback(hObject, eventdata, handles)
+
+fit_model(hObject, handles);
+
+% hObject    handle to pushbutton5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function edFps_Callback(hObject, eventdata, handles)
+% hObject    handle to edFps (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edFps as text
+%        str2double(get(hObject,'String')) returns contents of edFps as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edFps_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edFps (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in ch2refInd.
+function ch2refInd_Callback(hObject, eventdata, handles)
+
+if(get(handles.ch2refInd,'Value')==1)
+    set(handles.pmRefInd2,'Enable','on');
+    set(handles.te_m_red2,'Enable','on');
+    set(handles.te_m_green2,'Enable','on');
+else
+    set(handles.pmRefInd2,'Enable','off');
+    set(handles.te_m_red2,'Enable','off');
+    set(handles.te_m_green2,'Enable','off');
+end
+    
+
+% hObject    handle to ch2refInd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ch2refInd
+
+
+% --- Executes on selection change in pmRefInd2.
+function pmRefInd2_Callback(hObject, eventdata, handles)
+
+% Calculate refractive index
+S = get( handles.pmRefInd2,'String' );
+Vel = get( handles.pmRefInd2,'Value' );
+handles.mr2 = Calculate_m( 25, handles.Wr.wavelength, S{Vel} ) +...
+    str2num( get( handles.edShift_m, 'string' ) ) + str2num( get( handles.edShift_mred, 'string' ) );
+handles.mg2 = Calculate_m( 25, handles.Wg.wavelength, S{Vel} ) +...
+    str2num( get( handles.edShift_m, 'string' ) );
+set( handles.te_m_red2,'string',['m_r = ' num2str(handles.mr2)]);
+set( handles.te_m_green2,'string',['m_g = ' num2str(handles.mg2)]);
+% Update handles structure
+guidata(hObject, handles);
+
+% hObject    handle to pmRefInd2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns pmRefInd2 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from pmRefInd2
+
+
+% --- Executes during object creation, after setting all properties.
+function pmRefInd2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pmRefInd2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton6.
+function pushbutton6_Callback(hObject, eventdata, handles)
+
+[ref_ind_r, fraction] = maxGarnett( hObject, handles, 'red' );
+[ref_ind_g, fraction] = maxGarnett( hObject, handles, 'green' );
+
+handles.fraction = fraction;
+guidata(hObject,handles);
+
+figure()
+plot(handles.time,handles.fraction);
+
+% hObject    handle to pushbutton6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function edSmoothFactor_Callback(hObject, eventdata, handles)
+% hObject    handle to edSmoothFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edSmoothFactor as text
+%        str2double(get(hObject,'String')) returns contents of edSmoothFactor as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edSmoothFactor_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edSmoothFactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton7.
+function pushbutton7_Callback(hObject, eventdata, handles)
+
+[ref_ind_r, fraction] = maxGarnett( hObject, handles, 'red' );
+[ref_ind_g, fraction] = maxGarnett( hObject, handles, 'green' );
+
+time = handles.time;
+results = evalin('base', 'results');
+rExp = handles.rMaxGarnett;
+
+p = polyfit(time,rExp,25);
+ft = polyval(p,time);
+
+ref_ind_r_real = interp1(handles.r',ref_ind_r,ft);
+ref_ind_g_real = interp1(handles.r',ref_ind_g,ft);
+
+handles.ref_ind_r_real = ref_ind_r_real;
+handles.ref_ind_g_real = ref_ind_g_real;
+guidata(hObject,handles);
+
+figure()
+plot(handles.time,handles.ref_ind_r_real,'r');
+hold on
+plot(handles.time,handles.ref_ind_g_real,'g');
+hold off
+
+% hObject    handle to pushbutton7 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in radiobutton4.
+function radiobutton4_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton4
+
+
+% --- Executes on button press in radiobutton5.
+function radiobutton5_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton5
+
+
+% --- Executes on button press in radiobutton6.
+function radiobutton6_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton6 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton6
+
+
+% --- Executes on button press in chRed.
+function chRed_Callback(hObject, eventdata, handles)
+
+val = get(handles.chRed,'Value');
+if(val == 1)
+    set(handles.chGreen,'Value', 0);
+    set(handles.chBlue,'Value', 0);
+else
+    set(handles.chGreen,'Value', 1);
+    set(handles.chBlue,'Value', 0);
+end
+
+% hObject    handle to chRed (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of chRed
+
+
+% --- Executes on button press in chGreen.
+function chGreen_Callback(hObject, eventdata, handles)
+
+val = get(handles.chGreen,'Value');
+if(val == 1)
+    set(handles.chRed,'Value', 0);
+    set(handles.chBlue,'Value', 0);
+else
+    set(handles.chRed,'Value', 0);
+    set(handles.chBlue,'Value', 1);
+end
+% hObject    handle to chGreen (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of chGreen
+
+
+% --- Executes on button press in chBlue.
+function chBlue_Callback(hObject, eventdata, handles)
+
+val = get(handles.chBlue,'Value');
+if(val == 1)
+    set(handles.chGreen,'Value', 0);
+    set(handles.chRed,'Value', 0);
+else
+    set(handles.chRed,'Value', 1);
+    set(handles.chBlue,'Value', 0);
+end
+
+% hObject    handle to chBlue (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of chBlue
