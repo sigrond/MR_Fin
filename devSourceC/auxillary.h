@@ -29,17 +29,17 @@ inline void stopTimer(const char nazwa[]){
 
 
 
-inline real sq(real a) {
+inline float sq(float a) {
 	return a*a;
 }
 inline int compare (const void * a, const void * b)
 {
-	  return ( *(real*)a - *(real*)b );
+	  return ( *(float*)a - *(float*)b );
 }
-//real sq(real);
-void printMatrix(real *, int, int);
-void printVector(real *, int);
+//float sq(float);
+void printMatrix(float *, int, int);
+void printVector(float *, int);
 
-void printRowVector( real *a, int n);
-void printDouble(real a);
+void printRowVector( float *a, int n);
+void printDouble(float a);
 #endif

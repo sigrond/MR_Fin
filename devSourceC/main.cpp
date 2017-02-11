@@ -1,5 +1,5 @@
 #include<cstdio>
-#include<complex.h>
+#include<complex>
 #include<cstdlib>
 #include<ctime>
 #include<cmath>
@@ -18,6 +18,7 @@
 #include"ccuda.h"
 #endif
 
+using namespace std;
 
 int main() {
 #ifdef TIMING
@@ -34,71 +35,71 @@ int main() {
 	FILE * pFile;
 	pFile = fopen("Cdata/setupMatlab","rb");
 	int mIpp, nIpp, mIss, nIss, sizeTp, sizeTs; //mIppi=mIss to liczba klatek filmu
-	real diafragma, hccd_max_G, hccd_max_R;
+	float diafragma, hccd_max_G, hccd_max_R;
 	dummy=fread((void*)(&mIpp)  , sizeof(int), 1, pFile);
 	dummy=fread((void*)(&nIpp)  , sizeof(int), 1, pFile);
 	dummy=fread((void*)(&mIss)  , sizeof(int), 1, pFile);
 	dummy=fread((void*)(&nIss)  , sizeof(int), 1, pFile);
 	dummy=fread((void*)(&sizeTp), sizeof(int), 1, pFile);
 	dummy=fread((void*)(&sizeTs), sizeof(int), 1, pFile);
-	dummy=fread((void*)(&diafragma) , sizeof(real), 1, pFile);
-	dummy=fread((void*)(&hccd_max_G), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&hccd_max_R), sizeof(real), 1, pFile);
+	dummy=fread((void*)(&diafragma) , sizeof(float), 1, pFile);
+	dummy=fread((void*)(&hccd_max_G), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&hccd_max_R), sizeof(float), 1, pFile);
 	fclose(pFile);
 #ifndef CUDA
- real * ipp = new real[mIpp*nIpp];
- real * iss = new real[mIss*nIss];
+ float * ipp = new float[mIpp*nIpp];
+ float * iss = new float[mIss*nIss];
 #endif
 #ifdef CUDA
- real * ipp;
- real * iss;
- allocCudaPointer(&ipp, mIpp*nIpp*sizeof(real));
- allocCudaPointer(&iss, mIss*nIss*sizeof(real));
+ float * ipp;
+ float * iss;
+ allocCudaPointer(&ipp, mIpp*nIpp*sizeof(float));
+ allocCudaPointer(&iss, mIss*nIss*sizeof(float));
 #endif
-	real * mTp = new real[sizeTp];
-	real * mTs = new real[sizeTs];
+	float * mTp = new float[sizeTp];
+	float * mTs = new float[sizeTs];
 
 	pFile = fopen("Cdata/ipp", "rb");
-	dummy=fread((void*)ipp, sizeof(real), mIpp*nIpp, pFile);
+	dummy=fread((void*)ipp, sizeof(float), mIpp*nIpp, pFile);
 	fclose(pFile);
 	pFile = fopen("Cdata/iss", "rb");
-	dummy=fread((void*)iss, sizeof(real), mIss*nIss,pFile);
+	dummy=fread((void*)iss, sizeof(float), mIss*nIss,pFile);
 	fclose(pFile);
 	pFile = fopen("Cdata/mTp", "rb");
-	dummy=fread((void*)mTp, sizeof(real), sizeTp, pFile);
+	dummy=fread((void*)mTp, sizeof(float), sizeTp, pFile);
 	fclose(pFile);
 	pFile = fopen("Cdata/mTs", "rb");
-	dummy=fread((void*)mTs, sizeof(real), sizeTs, pFile);
+	dummy=fread((void*)mTs, sizeof(float), sizeTs, pFile);
 	fclose(pFile);
 
-	real complex mR;
-	real complex mG;
-	real complex shiftM;
-	real complex shiftMRed;
-	real rMin, rMax, rStep, wavelengthR, wavelengthG;
-	real scale;
-	real shiftG;
-	real shiftR;
+	complex<float> mR;
+	complex<float> mG;
+	complex<float> shiftM;
+	complex<float> shiftMRed;
+	float rMin, rMax, rStep, wavelengthR, wavelengthG;
+	float scale;
+	float shiftG;
+	float shiftR;
 	int frameBegin;
 	int frameEnd;
 	int frameStep;
 	// Reading the setup file
 	pFile=fopen("Cdata/setup","rb");
-	dummy=fread((void*)(&mR), 2*sizeof(real), 1, pFile);
-	dummy=fread((void*)(&mG), 2*sizeof(real), 1, pFile);
-	dummy=fread((void*)(&rMin), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&rMax), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&rStep), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&scale), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&shiftR), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&shiftG), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&shiftM), 2*sizeof(real), 1, pFile);
-	dummy=fread((void*)(&shiftMRed), 2*sizeof(real), 1, pFile);
+	dummy=fread((void*)(&mR), 2*sizeof(float), 1, pFile);
+	dummy=fread((void*)(&mG), 2*sizeof(float), 1, pFile);
+	dummy=fread((void*)(&rMin), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&rMax), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&rStep), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&scale), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&shiftR), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&shiftG), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&shiftM), 2*sizeof(float), 1, pFile);
+	dummy=fread((void*)(&shiftMRed), 2*sizeof(float), 1, pFile);
 	dummy=fread((void*)(&frameBegin), sizeof(int), 1, pFile);
 	dummy=fread((void*)(&frameStep), sizeof(int), 1, pFile);
 	dummy=fread((void*)(&frameEnd), sizeof(int), 1, pFile);
-	dummy=fread((void*)(&wavelengthR), sizeof(real), 1, pFile);
-	dummy=fread((void*)(&wavelengthG), sizeof(real), 1, pFile);
+	dummy=fread((void*)(&wavelengthR), sizeof(float), 1, pFile);
+	dummy=fread((void*)(&wavelengthG), sizeof(float), 1, pFile);
 	fclose(pFile);
 
 	frameBegin-=1;
@@ -118,20 +119,20 @@ int main() {
 	init=clock();
 #endif
 #endif
-	shiftR = shiftR * 2.0 * M_PI /(real)360; //Now shifts in RAD
-	shiftG = shiftG * 2.0 * M_PI /(real)360;
+	shiftR = shiftR * 2.0 * M_PI /(float)360; //Now shifts in RAD
+	shiftG = shiftG * 2.0 * M_PI /(float)360;
 
 	int rSize=(int)floor( (rMax-rMin)/rStep)+1;
 	rSize = (rSize+3)/4*4; // UWAGA TUTAJ ZWIEKSZAM ZAKRES R ZEBY SIE DZIELILO PRZEZ 4
-	real *r = new real[rSize];
+	float *r = new float[rSize];
 	for(int i=0;i<rSize;++i) 
 		r[i]=rMin+rStep*i;
 
 
-	real * Tp = new real[sizeTp];
-	real * Ts = new real[sizeTs];
-	real * rrp = new real[sizeTp];
-	real * rrs = new real[sizeTs];
+	float * Tp = new float[sizeTp];
+	float * Ts = new float[sizeTs];
+	float * rrp = new float[sizeTp];
+	float * rrs = new float[sizeTs];
 #pragma omp parallel sections 
 	{
 #pragma omp section
@@ -166,18 +167,18 @@ int main() {
 #endif
 #endif
 #ifndef CUDA
-	real * Ittp = new real[rSize*sizeTp];
-	real * Itts = new real[rSize*sizeTs];
+	float * Ittp = new float[rSize*sizeTp];
+	float * Itts = new float[rSize*sizeTs];
 #endif
 #ifdef CUDA
-	real * Ittp;
-	real * Itts;
-	allocCudaPointer(&Ittp, rSize*sizeTp*sizeof(real));
-	allocCudaPointer(&Itts, rSize*sizeTs*sizeof(real));
+	float * Ittp;
+	float * Itts;
+	allocCudaPointer(&Ittp, rSize*sizeTp*sizeof(float));
+	allocCudaPointer(&Itts, rSize*sizeTs*sizeof(float));
 #endif 
 
 
-	real complex *m = new  real complex[rSize];
+	complex<float> *m = new  complex<float>[rSize];
 	GeneratePattern( Ittp, r, rSize, mR, Tp, sizeTp, wavelengthR, wavelengthG, 0, sizeTp);
 	GeneratePattern( Itts, r, rSize, mG, Ts, sizeTs, wavelengthR, wavelengthG, 1, sizeTs);
 	delete [] Tp;
@@ -202,12 +203,12 @@ int main() {
 	rrs=rrp=0;
 
 #ifndef CUDA
-	real * errp = new real[mIpp * rSize];
-	real * errs = new real[mIss * rSize];
+	float * errp = new float[mIpp * rSize];
+	float * errs = new float[mIss * rSize];
 #endif
 #ifdef CUDA
-	real * errp;
-	real * errs;
+	float * errp;
+	float * errs;
 #endif
 
 
@@ -255,23 +256,23 @@ int main() {
 	init=clock();
 #endif
 #endif
-	real * err = new real[mIpp*rSize];
-	real * inv_median_errp = new real[mIpp];
-	real * inv_median_errs= new real[mIss];
-	real * errpSorted = new real[mIpp*rSize];
-	real * errsSorted = new real[mIss*rSize];
-	memcpy(errpSorted, errp, mIpp*rSize*sizeof(real));
-	memcpy(errsSorted, errs, mIss*rSize*sizeof(real));
+	float * err = new float[mIpp*rSize];
+	float * inv_median_errp = new float[mIpp];
+	float * inv_median_errs= new float[mIss];
+	float * errpSorted = new float[mIpp*rSize];
+	float * errsSorted = new float[mIss*rSize];
+	memcpy(errpSorted, errp, mIpp*rSize*sizeof(float));
+	memcpy(errsSorted, errs, mIss*rSize*sizeof(float));
 #pragma omp parallel
 	{
 #pragma omp for
 		for(int i=0;i<mIpp;++i) {
-			qsort(errpSorted+i*rSize, rSize, sizeof(real), compare);
+			qsort(errpSorted+i*rSize, rSize, sizeof(float), compare);
 			inv_median_errp[i]=1.0/errpSorted[i*rSize+rSize/2];
 		}
 #pragma omp for nowait
 		for(int i=0;i<mIss;++i) {
-			qsort(errsSorted+i*rSize, rSize, sizeof(real), compare);
+			qsort(errsSorted+i*rSize, rSize, sizeof(float), compare);
 			inv_median_errs[i]=1.0/errsSorted[i*rSize+rSize/2];
 		}
 	}
@@ -296,7 +297,7 @@ int main() {
 
 			for(int i=0;i<mIpp;++i) {
 				int index=0;
-				real value=errp[i*rSize];
+				float value=errp[i*rSize];
 				for(int j=0;j<rSize;++j) {
 					if( errp[i*rSize+j] < value ) {
 						value = errp[i*rSize+j];
@@ -311,7 +312,7 @@ int main() {
 
 			for(int i=0;i<mIss;++i) {
 				int index=0;
-				real value=errs[i*rSize];
+				float value=errs[i*rSize];
 				for(int j=0;j<rSize;++j) {
 					if( errs[i*rSize +j] < value ) {
 						value = errs[i*rSize+j];
@@ -326,7 +327,7 @@ int main() {
 
 			for(int i=0;i<mIss;++i) {
 				int index=0;
-				real value=err[i*rSize];
+				float value=err[i*rSize];
 				for(int j=0;j<rSize;++j) {
 					if( err[i*rSize+j] < value ) {
 						value = err[i*rSize+j];
@@ -356,9 +357,9 @@ int main() {
 #endif
 #endif
 
-	real * rIrmp = new real[mIpp];
-	real * rIrms = new real[mIpp];
-	real * rIrm  = new real[mIpp];
+	float * rIrmp = new float[mIpp];
+	float * rIrms = new float[mIpp];
+	float * rIrm  = new float[mIpp];
 	for(int i=0;i<mIpp;++i) {
 		rIrmp[i] = r[irmp[i]];
 		rIrms[i] = r[irms[i]];
@@ -368,9 +369,9 @@ int main() {
 	//Saving the results
 	pFile = fopen("Cdata/results", "wb");
 	dummy=fwrite((void*)(&mIpp), sizeof(int), 1, pFile);
-	dummy=fwrite((void*)rIrmp, sizeof(real), mIpp, pFile);
-	dummy=fwrite((void*)rIrms, sizeof(real), mIpp, pFile);
-	dummy=fwrite((void*)rIrm,  sizeof(real), mIpp, pFile);
+	dummy=fwrite((void*)rIrmp, sizeof(float), mIpp, pFile);
+	dummy=fwrite((void*)rIrms, sizeof(float), mIpp, pFile);
+	dummy=fwrite((void*)rIrm,  sizeof(float), mIpp, pFile);
 	fclose(pFile);
 
 	delete [] rIrmp;

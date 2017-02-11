@@ -1,9 +1,10 @@
 #ifndef __globals
 #define __globals
-#define real float
-#define cabs cabsf
-#define ccos ccosf
-#define csin csinf
-#define creal crealf
-#define cimag cimagf
+//#define float float
+#define cabs abs
+#define ccos cos
+#define csin sin
+#define cfloat float
+#define cimag imag
+#define M_PI 3.1415f
 #endif
