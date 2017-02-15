@@ -362,14 +362,15 @@ end
 % --- Executes on button press in pbCalc.
 function pbCalc_Callback(hObject, eventdata, handles)
 % ======= Calc ==========================
-handles.C = 0;
+handles.C = 1;
 if handles.C
     
     externalM = get(handles.ch2refInd,'Value');
     
     save_setup; %KOD DO C
+    pause(0.1);
     TT=tic;
-    [status,result] = system('./client .socket','-echo'); %KOD DO C
+    [status,result] = system('mymrfin.exe'); %KOD DO C
     czas=toc(TT)
 end
 

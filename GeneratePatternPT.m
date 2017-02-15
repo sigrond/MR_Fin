@@ -90,6 +90,11 @@ for i = 1 : length(r)
     
     % Computing scattering series coefficients
     if isreal(m(i))
+        i
+        if i>=8600
+            DebugM=complex(m(i),0)
+            DebugX=complex(r(i)*2 * pi / waves(1).wavelength,0)
+        end
         [a b]=Mie_ab_mex_omp(complex(m(i),0),complex(r(i)*2 * pi / waves(1).wavelength,0));
     else
         [a b]=Mie_ab_mex_omp(m(i),complex(r(i)*2 * pi / waves(1).wavelength,0));
