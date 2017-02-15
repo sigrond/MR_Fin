@@ -1,2 +1,2 @@
 #include"globals.h"
-void calculateMiePT(int, int, real *, real *, real *); 
+void calculateMiePT(int, int, float *, float *, float *); 

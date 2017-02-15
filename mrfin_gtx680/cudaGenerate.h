@@ -1,1 +1,1 @@
-void cudaGenerate(int rSize, int pattern_length, int * Nmax, real * pii, int nPiiTau,  real * tau, real * aReal, real * aImag, real * bReal, real * bImag, real * II, int polarization);
+void cudaGenerate(int rSize, int pattern_length, int * Nmax, float * pii, int nPiiTau,  float * tau, float * afloat, float * aImag, float * bfloat, float * bImag, float * II, int polarization);

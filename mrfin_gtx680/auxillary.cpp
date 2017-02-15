@@ -5,23 +5,23 @@
 //double sq(double a) {
 //	return a*a;
 //}
-void printMatrix(real *a, int m, int n) {
+void printMatrix(float *a, int m, int n) {
 	for(int i=0;i<m;i++) {
 		for(int j=0;j<n;j++)
 			printf("%e ", a[i*n+j]);
 		printf("\n");
 	}
 }
-void printVector(real *a, int n) {
+void printVector(float *a, int n) {
 	for(int i=0;i<n;++i)
 		printf("%.5e ", a[i]);
 	printf("\n");
 }
-void printRowVector( real *a, int n) {
+void printRowVector( float *a, int n) {
 	for(int i=0;i<n;++i)
 		printf("%.10e\n", a[i]);
 }
-void printDouble(real a) {
+void printDouble(float a) {
 	printf("%f\n", a);
 }
 

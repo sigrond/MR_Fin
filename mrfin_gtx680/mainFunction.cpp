@@ -1,5 +1,5 @@
 #include<cstdio>
-#include<complex.h>
+#include<complex>
 #include<cstdlib>
 #include<ctime>
 #include<cmath>
@@ -23,6 +23,8 @@
 #define readVariable(a1,a2,a3,a4) __readVariable(a1, a2, a3, a4, __FILE__, __LINE__, #a1)
 #define writeVariable(a1,a2,a3,a4) __writeVariable(a1, a2, a3, a4, __FILE__, __LINE__, #a1)
 
+using namespace std;
+
 void mainFunction() {
 	double init;
 	startTimer(init);
@@ -30,96 +32,136 @@ void mainFunction() {
  *                       Read data from files                        *
  *********************************************************************/
 	size_t dummy;
-	FILE * pFile;
+	FILE * pFile=NULL;
 	pFile = fopen("Cdata/setupMatlab","rb");
+	if (pFile == NULL)
+	{
+		printf("error opening Cdata/setupMatlab\n");
+		return;
+	}
 	int mIpp, nIpp, mIss, nIss, sizeTp, sizeTs; //mIppi=mIss to liczba klatek filmu
-	real diafragma, hccd_max_G, hccd_max_R;
+	float diafragma, hccd_max_G, hccd_max_R;
 	readVariable((void*)(&mIpp)       , sizeof(int)  , 1 , pFile);
 	readVariable((void*)(&nIpp)       , sizeof(int)  , 1 , pFile);
 	readVariable((void*)(&mIss)       , sizeof(int)  , 1 , pFile);
 	readVariable((void*)(&nIss)       , sizeof(int)  , 1 , pFile);
 	readVariable((void*)(&sizeTp)     , sizeof(int)  , 1 , pFile);
 	readVariable((void*)(&sizeTs)     , sizeof(int)  , 1 , pFile);
-	readVariable((void*)(&diafragma)  , sizeof(real) , 1 , pFile);
-	readVariable((void*)(&hccd_max_G) , sizeof(real) , 1 , pFile);
-	readVariable((void*)(&hccd_max_R) , sizeof(real) , 1 , pFile);
+	readVariable((void*)(&diafragma)  , sizeof(float) , 1 , pFile);
+	readVariable((void*)(&hccd_max_G) , sizeof(float) , 1 , pFile);
+	readVariable((void*)(&hccd_max_R) , sizeof(float) , 1 , pFile);
 	fclose(pFile);
 
-	real * ipp;
-	real * iss;
-	allocMemory((void**)&ipp, mIpp*nIpp*sizeof(real));
-	allocMemory((void**)&iss, mIss*nIss*sizeof(real));
-	real * mTp = new real[sizeTp];
-	real * mTs = new real[sizeTs];
+	float * ipp;
+	float * iss;
+	allocMemory((void**)&ipp, mIpp*nIpp*sizeof(float));
+	allocMemory((void**)&iss, mIss*nIss*sizeof(float));
+	float * mTp = new float[sizeTp];
+	float * mTs = new float[sizeTs];
 
 	pFile = fopen("Cdata/ipp", "rb");
-	readVariable((void*)ipp, sizeof(real), mIpp*nIpp, pFile);
+	if (pFile == NULL)
+	{
+		printf("error opening Cdata/ipp\n");
+		return;
+	}
+	readVariable((void*)ipp, sizeof(float), mIpp*nIpp, pFile);
 	fclose(pFile);
 	pFile = fopen("Cdata/iss", "rb");
-	readVariable((void*)iss, sizeof(real), mIss*nIss,pFile);
+	if (pFile == NULL)
+	{
+		printf("error opening Cdata/iss\n");
+		return;
+	}
+	readVariable((void*)iss, sizeof(float), mIss*nIss,pFile);
 	fclose(pFile);
 	pFile = fopen("Cdata/mTp", "rb");
-	readVariable((void*)mTp, sizeof(real), sizeTp, pFile);
+	if (pFile == NULL)
+	{
+		printf("error opening Cdata/mTp\n");
+		return;
+	}
+	readVariable((void*)mTp, sizeof(float), sizeTp, pFile);
 	fclose(pFile);
 	pFile = fopen("Cdata/mTs", "rb");
-	readVariable((void*)mTs, sizeof(real), sizeTs, pFile);
+	if (pFile == NULL)
+	{
+		printf("error opening Cdata/mTs\n");
+		return;
+	}
+	readVariable((void*)mTs, sizeof(float), sizeTs, pFile);
 	fclose(pFile);
 
-	//real complex mR;
-	//real complex mG;
-	real complex shiftM;
-	real complex shiftMRed;
-	real rMin, rMax, rStep, wavelengthR, wavelengthG;
-	real scale;
-	real shiftG;
-	real shiftR;
+	//complex<float> mR;
+	//complex<float> mG;
+	complex<float> shiftM;
+	complex<float> shiftMRed;
+	float rMin, rMax, rStep, wavelengthR, wavelengthG;
+	float scale;
+	float shiftG;
+	float shiftR;
 	int frameBegin;
 	int frameEnd;
 	int frameStep;
 	int externalM;
-	real complex * mR;
-	real complex * mG;
-	real complex  mRsingle;
-	real complex  mGsingle;
+	complex<float> * mR;
+	complex<float> * mG;
+	complex<float>  mRsingle;
+	complex<float>  mGsingle;
 /*********************************************************************
  *                            Read setup                             *
  *********************************************************************/
 
 	pFile=fopen("Cdata/setup","rb");
+	if (pFile == NULL)
+	{
+		printf("error opening Cdata/setup\n");
+		return;
+	}
 	readVariable((void*)(&externalM)   ,  sizeof(int)    , 1 , pFile); 
 	if ( externalM != 1 ) {
 		printf("Wczytuje pojedyncze wspolczynniki zalamania\n");
-		readVariable((void*)(&mRsingle)          , 2*sizeof(real) , 1 , pFile);
-		readVariable((void*)(&mGsingle)          , 2*sizeof(real) , 1 , pFile);
+		readVariable((void*)(&mRsingle)          , 2*sizeof(float) , 1 , pFile);
+		readVariable((void*)(&mGsingle)          , 2*sizeof(float) , 1 , pFile);
 	}
-	readVariable((void*)(&rMin)        , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&rMax)        , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&rStep)       , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&scale)       , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&shiftR)      , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&shiftG)      , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&shiftM)      , 2*sizeof(real) , 1 , pFile);
-	readVariable((void*)(&shiftMRed)   , 2*sizeof(real) , 1 , pFile);
+	readVariable((void*)(&rMin)        , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&rMax)        , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&rStep)       , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&scale)       , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&shiftR)      , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&shiftG)      , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&shiftM)      , 2*sizeof(float) , 1 , pFile);
+	readVariable((void*)(&shiftMRed)   , 2*sizeof(float) , 1 , pFile);
 	readVariable((void*)(&frameBegin)  , sizeof(int)    , 1 , pFile);
 	readVariable((void*)(&frameStep)   , sizeof(int)    , 1 , pFile);
 	readVariable((void*)(&frameEnd)    , sizeof(int)    , 1 , pFile);
-	readVariable((void*)(&wavelengthR) , sizeof(real)   , 1 , pFile);
-	readVariable((void*)(&wavelengthG) , sizeof(real)   , 1 , pFile);
+	readVariable((void*)(&wavelengthR) , sizeof(float)   , 1 , pFile);
+	readVariable((void*)(&wavelengthG) , sizeof(float)   , 1 , pFile);
 	fclose(pFile);
 
 	int rSize=(int)floor( (rMax-rMin)/rStep)+1;
 	rSize = (rSize+3)/4*4; // UWAGA TUTAJ ZWIEKSZAM ZAKRES R ZEBY SIE DZIELILO PRZEZ 4
-	mR =(real complex *) malloc( rSize*sizeof(real)*2 );
-	mG =(real complex *) malloc( rSize*sizeof(real)*2 );
+	mR =(complex<float> *) malloc( rSize*sizeof(float)*2 );
+	mG =(complex<float> *) malloc( rSize*sizeof(float)*2 );
 
 	if ( externalM == 1 ) {
 		printf("Wczytuje wspolczynniki zalamania z pliku\n");
 		pFile = fopen("Cdata/mR" , "rb");
-		readVariable((void*)mR, 2*sizeof(real), rSize, pFile);
+		if (pFile == NULL)
+		{
+			printf("error opening Cdata/mR\n");
+			return;
+		}
+		readVariable((void*)mR, 2*sizeof(float), rSize, pFile);
 		fclose(pFile);
 
 		pFile = fopen("Cdata/mG", "rb");
-		readVariable((void*)mG, 2*sizeof(real), rSize, pFile);
+		if (pFile == NULL)
+		{
+			printf("error opening Cdata/mG\n");
+			return;
+		}
+		readVariable((void*)mG, 2*sizeof(float), rSize, pFile);
 		fclose(pFile);
 
 	}
@@ -137,18 +179,18 @@ void mainFunction() {
  *                          Running Radius                           *
  *********************************************************************/
 	startTimer(init);
-	shiftR = shiftR * 2.0 * M_PI /(real)360; //Now shifts in RAD
-	shiftG = shiftG * 2.0 * M_PI /(real)360;
+	shiftR = shiftR * 2.0 * M_PI /(float)360; //Now shifts in RAD
+	shiftG = shiftG * 2.0 * M_PI /(float)360;
 
-	real *r = new real[rSize];
+	float *r = new float[rSize];
 	for(int i=0;i<rSize;++i) 
 		r[i]=rMin+rStep*i;
 
 
-	real * Tp  = new real[sizeTp];
-	real * Ts  = new real[sizeTs];
-	real * rrp = new real[sizeTp];
-	real * rrs = new real[sizeTs];
+	float * Tp  = new float[sizeTp];
+	float * Ts  = new float[sizeTs];
+	float * rrp = new float[sizeTp];
+	float * rrs = new float[sizeTs];
 	//#pragma omp parallel sections //TODO: sprawdzic czy to cos przyspiesza (04.04.13 by szmigacz)
 	//{
 	//#pragma omp section
@@ -179,13 +221,13 @@ void mainFunction() {
 /*********************************************************************
  *                         Generate pattern                          *
  *********************************************************************/
-	real * Ittp;
-	real * Itts;
-	allocMemory((void**)&Ittp, rSize*sizeTp*sizeof(real));
-	allocMemory((void**)&Itts, rSize*sizeTs*sizeof(real));
+	float * Ittp;
+	float * Itts;
+	allocMemory((void**)&Ittp, rSize*sizeTp*sizeof(float));
+	allocMemory((void**)&Itts, rSize*sizeTs*sizeof(float));
 
 
-	real complex *m = new  real complex[rSize];
+	complex<float> *m = new  complex<float>[rSize];
 	GeneratePattern( Ittp, r, rSize, mR, Tp, sizeTp, wavelengthR, wavelengthG, 0, sizeTp);
 	GeneratePattern( Itts, r, rSize, mG, Ts, sizeTs, wavelengthR, wavelengthG, 1, sizeTs);
 
@@ -220,29 +262,29 @@ void mainFunction() {
 	allocMemory((void**)&irm  , mIpp*sizeof(int));
 
 #ifndef CUDA
-	real * errp;
-	real * errs;
-	allocMemory((void**)&errp, mIpp*rSize*sizeof(real));
-	allocMemory((void**)&errs, mIss*rSize*sizeof(real));
-	real * inv_median_errp = new real[mIpp];
-	real * inv_median_errs = new real[mIss];
+	float * errp;
+	float * errs;
+	allocMemory((void**)&errp, mIpp*rSize*sizeof(float));
+	allocMemory((void**)&errs, mIss*rSize*sizeof(float));
+	float * inv_median_errp = new float[mIpp];
+	float * inv_median_errs = new float[mIss];
 	ReferenceDistance( errp, ipp, Ittp, mIpp, nIpp, rSize, sizeTp);
 	ReferenceDistance( errs, iss, Itts, mIss, nIss, rSize, sizeTs);
-	real * err        = new real[mIpp*rSize];
-	real * errpSorted = new real[mIpp*rSize];
-	real * errsSorted = new real[mIss*rSize];
-	memcpy(errpSorted, errp, mIpp*rSize*sizeof(real));
-	memcpy(errsSorted, errs, mIss*rSize*sizeof(real));
+	float * err        = new float[mIpp*rSize];
+	float * errpSorted = new float[mIpp*rSize];
+	float * errsSorted = new float[mIss*rSize];
+	memcpy(errpSorted, errp, mIpp*rSize*sizeof(float));
+	memcpy(errsSorted, errs, mIss*rSize*sizeof(float));
 #pragma omp parallel for
 	for(int i=0;i<mIpp;++i) {
-		//qsort(errpSorted+i*rSize, rSize, sizeof(real), compare);
+		//qsort(errpSorted+i*rSize, rSize, sizeof(float), compare);
 		std::sort(errpSorted+i*rSize, errpSorted+i*rSize + rSize);
 		inv_median_errp[i]=1.0/errpSorted[i*rSize+rSize/2];
 	}
 #pragma omp parallel for
 	for(int i=0;i<mIpp;++i) {
 		int index=0;
-		real value=errp[i*rSize];
+		float value=errp[i*rSize];
 		for(int j=0;j<rSize;++j) {
 			if( errp[i*rSize+j] < value ) {
 				value = errp[i*rSize+j];
@@ -253,14 +295,14 @@ void mainFunction() {
 	}
 #pragma omp parallel for
 	for(int i=0;i<mIss;++i) {
-		//qsort(errsSorted+i*rSize, rSize, sizeof(real), compare);
+		//qsort(errsSorted+i*rSize, rSize, sizeof(float), compare);
 		std::sort(errsSorted+i*rSize, errsSorted+i*rSize+rSize);
 		inv_median_errs[i]=1.0/errsSorted[i*rSize+rSize/2];
 	}
 #pragma omp parallel for
 	for(int i=0;i<mIss;++i) {
 		int index=0;
-		real value=errs[i*rSize];
+		float value=errs[i*rSize];
 		for(int j=0;j<rSize;++j) {
 			if( errs[i*rSize +j] < value ) {
 				value = errs[i*rSize+j];
@@ -275,7 +317,7 @@ void mainFunction() {
 #pragma omp parallel for
 	for(int i=0;i<mIss;++i) {
 		int index=0;
-		real value=err[i*rSize];
+		float value=err[i*rSize];
 		for(int j=0;j<rSize;++j) {
 			if( err[i*rSize+j] < value ) {
 				value = err[i*rSize+j];
@@ -325,9 +367,9 @@ void mainFunction() {
 
 	stopTimer("CZAS SZUKANIA MINIMOW I REF DISTANCE", init);
 
-	real * rIrmp = new real[mIpp];
-	real * rIrms = new real[mIpp];
-	real * rIrm  = new real[mIpp];
+	float * rIrmp = new float[mIpp];
+	float * rIrms = new float[mIpp];
+	float * rIrm  = new float[mIpp];
 	for(int i=0;i<mIpp;++i) {
 		rIrmp[i] = r[irmp[i]] ; 
 		rIrms[i] = r[irms[i]] ; 
@@ -339,9 +381,9 @@ void mainFunction() {
  *********************************************************************/
 	pFile = fopen("Cdata/results", "wb");
 	writeVariable((void*)(&mIpp) , sizeof(int)  , 1    , pFile);
-	writeVariable((void*)rIrmp   , sizeof(real) , mIpp , pFile);
-	writeVariable((void*)rIrms   , sizeof(real) , mIpp , pFile);
-	writeVariable((void*)rIrm    , sizeof(real) , mIpp , pFile);
+	writeVariable((void*)rIrmp   , sizeof(float) , mIpp , pFile);
+	writeVariable((void*)rIrms   , sizeof(float) , mIpp , pFile);
+	writeVariable((void*)rIrm    , sizeof(float) , mIpp , pFile);
 	fclose(pFile);
 #ifdef DEBUG
 	//fprintf(stderr, "mIpp %d\n", mIpp);

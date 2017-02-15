@@ -10,18 +10,18 @@
 
 
 
-__global__ void kernelCalcInvSquare(real *const references, real *const invSquare, int mReferences, int nReferences) {
-	volatile __shared__ real values[128];
+__global__ void kernelCalcInvSquare(float *const references, float *const invSquare, int mReferences, int nReferences) {
+	volatile __shared__ float values[128];
 	int index = blockIdx.x*nReferences + threadIdx.x;
-	register real partial;
+	register float partial;
 
 	if( threadIdx.x < nReferences ) {
-		real value = references[index];
+		float value = references[index];
 		partial = value * value;
 		for(int id = 128; id < nReferences; id+=128) {
 			if( threadIdx.x + id < nReferences ) {
 				index += 128;
-				real value = references[index];
+				float value = references[index];
 				partial += value * value;
 			}
 		}
@@ -47,18 +47,18 @@ __global__ void kernelCalcInvSquare(real *const references, real *const invSquar
 		}
 	}
 }
-__global__ void kernelCalcSquare(real * const references, real * const square, int mReferences, int nReferences) {
-	volatile __shared__ real values[128];
+__global__ void kernelCalcSquare(float * const references, float * const square, int mReferences, int nReferences) {
+	volatile __shared__ float values[128];
 	int index = blockIdx.x*nReferences + threadIdx.x;
-	register real partial;
+	register float partial;
 
 	if( threadIdx.x < nReferences ) {
-		real value = references[index];
+		float value = references[index];
 		partial = value * value;
 		for(int id = 128; id < nReferences; id+=128) {
 			if( threadIdx.x + id < nReferences ) {
 				index += 128;
-				real value = references[index];
+				float value = references[index];
 				partial += value * value;
 			}
 		}
@@ -89,27 +89,27 @@ texture<float> texPatterns;
 texture<float> texReferences;
 
 #if __CUDA_ARCH__ >= 300
-__global__ void kernelReferenceDistance(real const * const references, real const * const patterns, real const * const square, real const * const pSquare, real * const err, int const nPatterns, int const nReferences,int const mReferences) {
-	volatile __shared__ real pr1[THREADSREF/32];
-	volatile __shared__ real pr2[THREADSREF/32];
-	volatile __shared__ real pr3[THREADSREF/32];
-	volatile __shared__ real pr4[THREADSREF/32];
+__global__ void kernelReferenceDistance(float const * const references, float const * const patterns, float const * const square, float const * const pSquare, float * const err, int const nPatterns, int const nReferences,int const mReferences) {
+	volatile __shared__ float pr1[THREADSREF/32];
+	volatile __shared__ float pr2[THREADSREF/32];
+	volatile __shared__ float pr3[THREADSREF/32];
+	volatile __shared__ float pr4[THREADSREF/32];
 	register int indexPatterns = blockIdx.x * nPatterns  + threadIdx.x;
 	register int indexReferences = (4*blockIdx.y) * nReferences  + threadIdx.x;
 	register int indexReferences2 = indexReferences + nReferences ;//(4*blockIdx.y+1) * nReferences  + threadIdx.x;
 	register int indexReferences3 = indexReferences2 + nReferences;//(4*blockIdx.y+2) * nReferences  + threadIdx.x;
 	register int indexReferences4 = indexReferences3 + nReferences ;//(4*blockIdx.y+3) * nReferences  + threadIdx.x;
-	register real prPartial1=0.0f;
-	register real prPartial2=0.0f;
-	register real prPartial3=0.0f;
-	register real prPartial4=0.0f;
+	register float prPartial1=0.0f;
+	register float prPartial2=0.0f;
+	register float prPartial3=0.0f;
+	register float prPartial4=0.0f;
 
 	if( threadIdx.x < nPatterns ) {
-		real p  = tex1Dfetch(texPatterns,    indexPatterns);
-		real r1 = tex1Dfetch(texReferences, indexReferences);
-		real r2 = tex1Dfetch(texReferences, indexReferences2);
-		real r3 = tex1Dfetch(texReferences, indexReferences3);
-		real r4 = tex1Dfetch(texReferences, indexReferences4);
+		float p  = tex1Dfetch(texPatterns,    indexPatterns);
+		float r1 = tex1Dfetch(texReferences, indexReferences);
+		float r2 = tex1Dfetch(texReferences, indexReferences2);
+		float r3 = tex1Dfetch(texReferences, indexReferences3);
+		float r4 = tex1Dfetch(texReferences, indexReferences4);
 		prPartial1 = p*r1;
 		prPartial2 = p*r2;
 		prPartial3 = p*r3;
@@ -172,27 +172,27 @@ __global__ void kernelReferenceDistance(real const * const references, real cons
 }
 #endif
 #if __CUDA_ARCH__ < 300
-__global__ void kernelReferenceDistance(real const * const references, real const * const patterns, real const * const square, real const * const pSquare, real * const err, int const nPatterns, int const nReferences,int const mReferences) {
-	volatile __shared__ real pr1[THREADSREF];
-	volatile __shared__ real pr2[THREADSREF];
-	volatile __shared__ real pr3[THREADSREF];
-	volatile __shared__ real pr4[THREADSREF];
+__global__ void kernelReferenceDistance(float const * const references, float const * const patterns, float const * const square, float const * const pSquare, float * const err, int const nPatterns, int const nReferences,int const mReferences) {
+	volatile __shared__ float pr1[THREADSREF];
+	volatile __shared__ float pr2[THREADSREF];
+	volatile __shared__ float pr3[THREADSREF];
+	volatile __shared__ float pr4[THREADSREF];
 	register int indexPatterns = blockIdx.x * nPatterns  + threadIdx.x;
 	register int indexReferences = (4*blockIdx.y) * nReferences  + threadIdx.x;
 	register int indexReferences2 = indexReferences + nReferences ;//(4*blockIdx.y+1) * nReferences  + threadIdx.x;
 	register int indexReferences3 = indexReferences2 + nReferences;//(4*blockIdx.y+2) * nReferences  + threadIdx.x;
 	register int indexReferences4 = indexReferences3 + nReferences ;//(4*blockIdx.y+3) * nReferences  + threadIdx.x;
-	register real prPartial1=0.0f;
-	register real prPartial2=0.0f;
-	register real prPartial3=0.0f;
-	register real prPartial4=0.0f;
+	register float prPartial1=0.0f;
+	register float prPartial2=0.0f;
+	register float prPartial3=0.0f;
+	register float prPartial4=0.0f;
 
 	if( threadIdx.x < nPatterns ) {
-		real p = patterns[indexPatterns];
-		real r1 = references[indexReferences];
-		real r2 = references[indexReferences2];
-		real r3 = references[indexReferences3];
-		real r4 = references[indexReferences4];
+		float p = patterns[indexPatterns];
+		float r1 = references[indexReferences];
+		float r2 = references[indexReferences2];
+		float r3 = references[indexReferences3];
+		float r4 = references[indexReferences4];
 		prPartial1 = p*r1;
 		prPartial2 = p*r2;
 		prPartial3 = p*r3;
@@ -277,17 +277,17 @@ __global__ void kernelReferenceDistance(real const * const references, real cons
 }
 #endif
 
-texture<real> texErr;
-__global__ void cudaFindMinMaxKernel(real * in, int * out, real * max, real *min, int rSize) {
-	volatile __shared__ real minShared[THREADS];
-	volatile __shared__ real maxShared[THREADS];
+texture<float> texErr;
+__global__ void cudaFindMinMaxKernel(float * in, int * out, float * max, float *min, int rSize) {
+	volatile __shared__ float minShared[THREADS];
+	volatile __shared__ float maxShared[THREADS];
 	volatile __shared__ int idxShared[THREADS];
-	real minValue = INFINITY;
-	real maxValue = -INFINITY;
+	float minValue = INFINITY;
+	float maxValue = -INFINITY;
 	int idx=0;
 	for (int index = 0; index < rSize; index+=THREADS) {
 		if (index + threadIdx.x < rSize) {
-			real valtemp = tex1Dfetch( texErr, blockIdx.x*rSize+ index + threadIdx.x);
+			float valtemp = tex1Dfetch( texErr, blockIdx.x*rSize+ index + threadIdx.x);
 			if( valtemp < minValue) {
 				minValue = valtemp;
 				idx = index + threadIdx.x;
@@ -359,18 +359,18 @@ __global__ void cudaFindMinMaxKernel(real * in, int * out, real * max, real *min
 	}
 }
 
-__global__ void kernelHistogram(real const * const in, real const * const min, real const * const max, real *const median, int nBins, int rSize) {
+__global__ void kernelHistogram(float const * const in, float const * const min, float const * const max, float *const median, int nBins, int rSize) {
 	extern __shared__ int bins[];
 	for (int i = threadIdx.x; i < nBins; i+=blockDim.x) {
 		bins[i] = 0;
 	}
 	__syncthreads();
-	real minval = min[blockIdx.x];
-	real maxval = max[blockIdx.x];
-	real invBinWidth = ((real)nBins)/(maxval-minval);
+	float minval = min[blockIdx.x];
+	float maxval = max[blockIdx.x];
+	float invBinWidth = ((float)nBins)/(maxval-minval);
 	for (int index = 0; index < rSize; index+=THREADS) {
 		if (index + threadIdx.x < rSize) {
-			real valtemp = tex1Dfetch( texErr, blockIdx.x*rSize+ index + threadIdx.x);
+			float valtemp = tex1Dfetch( texErr, blockIdx.x*rSize+ index + threadIdx.x);
 			atomicAdd(bins+(int)((valtemp-minval)*invBinWidth) ,1);      
 		}
 	}
@@ -382,7 +382,7 @@ __global__ void kernelHistogram(real const * const in, real const * const min, r
 			sum+=bins[idx];
 			idx++;
 		}
-		median[blockIdx.x] = 1.0f/(minval + ((real)idx)/invBinWidth);
+		median[blockIdx.x] = 1.0f/(minval + ((float)idx)/invBinWidth);
 	}
 
 
@@ -390,15 +390,15 @@ __global__ void kernelHistogram(real const * const in, real const * const min, r
 
 
 
-void cudaReferenceDistance(real const * const patterns, real const * const references, int * const minIndex,  int const mPatterns, int const nPatterns, int const mReferences, int const nReferences, int polarization) {
+void cudaReferenceDistance(float const * const patterns, float const * const references, int * const minIndex,  int const mPatterns, int const nPatterns, int const mReferences, int const nReferences, int polarization) {
 
 	//printf("%d %d %d\n", mPatterns, mReferences, nPatterns);
 
-	CudaSafeCall(cudaMemcpyAsync(devReferences[polarization], references,mReferences*nReferences*sizeof(real), cudaMemcpyHostToDevice, streamRef[polarization]));
-	CudaSafeCall(cudaMemcpyAsync(devPatterns[polarization], patterns, mPatterns*nPatterns*sizeof(real), cudaMemcpyHostToDevice, streamRef[polarization]));
-	CudaSafeCall( cudaBindTexture( NULL, texPatterns, devPatterns[polarization], mPatterns*nPatterns*sizeof(real)));
-	CudaSafeCall( cudaBindTexture( NULL, texReferences, devReferences[polarization], mReferences*nReferences*sizeof(real)));
-	CudaSafeCall(cudaBindTexture( NULL, texErr, devErr[polarization], mPatterns*mReferences*sizeof(real)));
+	CudaSafeCall(cudaMemcpyAsync(devReferences[polarization], references,mReferences*nReferences*sizeof(float), cudaMemcpyHostToDevice, streamRef[polarization]));
+	CudaSafeCall(cudaMemcpyAsync(devPatterns[polarization], patterns, mPatterns*nPatterns*sizeof(float), cudaMemcpyHostToDevice, streamRef[polarization]));
+	CudaSafeCall( cudaBindTexture( NULL, texPatterns, devPatterns[polarization], mPatterns*nPatterns*sizeof(float)));
+	CudaSafeCall( cudaBindTexture( NULL, texReferences, devReferences[polarization], mReferences*nReferences*sizeof(float)));
+	CudaSafeCall(cudaBindTexture( NULL, texErr, devErr[polarization], mPatterns*mReferences*sizeof(float)));
 
 	cudaFuncSetCacheConfig(kernelCalcInvSquare, cudaFuncCachePreferShared);
 	kernelCalcInvSquare<<< mReferences, 128,0, streamRef[polarization]>>>(devReferences[polarization], devInvRSquare[polarization], mReferences, nReferences);

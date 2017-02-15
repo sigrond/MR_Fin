@@ -1,25 +1,25 @@
 #include"globals.h"
 #include"cudaGlobals.h"
 #include"cudaError.h"
-real * devPii[2];
-real * devTau[2];
-real * devAReal[2];
-real * devAImag[2];
-real * devBReal[2];
-real * devBImag[2];
-real * devII[2];
+float * devPii[2];
+float * devTau[2];
+float * devAfloat[2];
+float * devAImag[2];
+float * devBfloat[2];
+float * devBImag[2];
+float * devII[2];
 int * devNmax[2];
 cudaStream_t stream[2];
-real * devReferences[2];
-real * devErr[2];
-real * devPatterns[2];
-real * devInvRSquare[2];
-real * devPSquare[2];
+float * devReferences[2];
+float * devErr[2];
+float * devPatterns[2];
+float * devInvRSquare[2];
+float * devPSquare[2];
 cudaStream_t streamRef[2];
-real * devMin[2];
-real * devMax[2];
+float * devMin[2];
+float * devMax[2];
 int * devMinIndex[2];
-real * devMedian[2];
+float * devMedian[2];
 int * devOut;
 
 
@@ -32,15 +32,15 @@ void allocCudaPointer(void ** pointer, size_t size) {
 	
 void mallocCudaReferences(int i, int const mPatterns, int const nPatterns, int const mReferences, int const nReferences ) {
 			CudaSafeCall(cudaStreamCreate(&streamRef[i]));
-			CudaSafeCall(cudaMalloc((void**)&devPatterns[i], mPatterns*nPatterns*sizeof(real)));
-			CudaSafeCall(cudaMalloc((void**)&devReferences[i],mReferences*nReferences*sizeof(real)));
-			CudaSafeCall(cudaMalloc((void**)&devInvRSquare[i], mReferences*sizeof(real)));
-			CudaSafeCall(cudaMalloc((void**)&devPSquare[i], mPatterns*sizeof(real)));
-			CudaSafeCall(cudaMalloc((void**)&devErr[i], mPatterns*mReferences*sizeof(real)));
-			CudaSafeCall(cudaMalloc((void**)&devMin[i], mPatterns*sizeof(real)));
-			CudaSafeCall(cudaMalloc((void**)&devMax[i], mPatterns*sizeof(real))); //TODO: czy rozmiar dobry? (04.04.13 by szmigacz)
+			CudaSafeCall(cudaMalloc((void**)&devPatterns[i], mPatterns*nPatterns*sizeof(float)));
+			CudaSafeCall(cudaMalloc((void**)&devReferences[i],mReferences*nReferences*sizeof(float)));
+			CudaSafeCall(cudaMalloc((void**)&devInvRSquare[i], mReferences*sizeof(float)));
+			CudaSafeCall(cudaMalloc((void**)&devPSquare[i], mPatterns*sizeof(float)));
+			CudaSafeCall(cudaMalloc((void**)&devErr[i], mPatterns*mReferences*sizeof(float)));
+			CudaSafeCall(cudaMalloc((void**)&devMin[i], mPatterns*sizeof(float)));
+			CudaSafeCall(cudaMalloc((void**)&devMax[i], mPatterns*sizeof(float))); //TODO: czy rozmiar dobry? (04.04.13 by szmigacz)
 			CudaSafeCall(cudaMalloc((void**)&devMinIndex[i], mPatterns*sizeof(int)));
-			CudaSafeCall(cudaMalloc((void**)&devMedian[i], mPatterns*sizeof(real)));
+			CudaSafeCall(cudaMalloc((void**)&devMedian[i], mPatterns*sizeof(float)));
 
 }
 
@@ -53,9 +53,9 @@ void freeCudaMemory() {
 		for(int i=0;i<2;i++) {
 			CudaSafeCall(cudaFree(devPii[i]));
 			CudaSafeCall(cudaFree(devTau[i]));
-			CudaSafeCall(cudaFree(devAReal[i]));
+			CudaSafeCall(cudaFree(devAfloat[i]));
 			CudaSafeCall(cudaFree(devAImag[i]));
-			CudaSafeCall(cudaFree(devBReal[i]));
+			CudaSafeCall(cudaFree(devBfloat[i]));
 			CudaSafeCall(cudaFree(devBImag[i]));
 			CudaSafeCall(cudaFree(devII[i]));
 			CudaSafeCall(cudaFree(devNmax[i]));

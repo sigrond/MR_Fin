@@ -1,2 +1,2 @@
-void RunningRadius(real * r, real * alpha, int alphaSize  , real h_CCD_max, real fi, real lambda);
-real find_l_CCD( real h_CCD_max, real fi, real lambda);
+void RunningRadius(float * r, float * alpha, int alphaSize  , float h_CCD_max, float fi, float lambda);
+float find_l_CCD( float h_CCD_max, float fi, float lambda);

@@ -5,24 +5,24 @@
 #include<cstdio>
 
 #define THREADS 128
-//texture<real> texIn;
-texture<real> texErrs;
-texture<real> texErrp;
+//texture<float> texIn;
+texture<float> texErrs;
+texture<float> texErrp;
 
-__global__ void cudaFindMinKernel(real const * const invMedS, real const * const invMedP, int * out, int rSize) {
-	volatile __shared__ real inShared[THREADS];
+__global__ void cudaFindMinKernel(float const * const invMedS, float const * const invMedP, int * out, int rSize) {
+	volatile __shared__ float inShared[THREADS];
 	volatile __shared__ int idxShared[THREADS];
 	
-	real value = INFINITY;
+	float value = INFINITY;
 	int idx=0;
-	real invMedSval = invMedS[blockIdx.x];
-	real invMedPval = invMedP[blockIdx.x];
+	float invMedSval = invMedS[blockIdx.x];
+	float invMedPval = invMedP[blockIdx.x];
 
 	for (int index = 0; index < rSize; index+=THREADS) {
 		if (index + threadIdx.x < rSize) {
-			real valErrs = tex1Dfetch( texErrs, blockIdx.x*rSize+ index + threadIdx.x);
-			real valErrp = tex1Dfetch( texErrp, blockIdx.x*rSize+ index + threadIdx.x);
-			real val = valErrs*valErrp*invMedSval*invMedPval;
+			float valErrs = tex1Dfetch( texErrs, blockIdx.x*rSize+ index + threadIdx.x);
+			float valErrp = tex1Dfetch( texErrp, blockIdx.x*rSize+ index + threadIdx.x);
+			float val = valErrs*valErrp*invMedSval*invMedPval;
 			if( val < value) {
 				value = val;
 				idx = index + threadIdx.x;
@@ -75,10 +75,10 @@ __global__ void cudaFindMinKernel(real const * const invMedS, real const * const
 
 
 void cudaFindMin(int * out, int pol, int rSize, int movieSize) {
-	//CudaSafeCall(cudaMalloc((void**)&devIn[pol], rSize*movieSize*sizeof(real)));
+	//CudaSafeCall(cudaMalloc((void**)&devIn[pol], rSize*movieSize*sizeof(float)));
 	CudaSafeCall(cudaMalloc((void**)&devOut, movieSize*sizeof(int)));
-	CudaSafeCall(cudaBindTexture( NULL, texErrp, devErr[0], rSize*movieSize*sizeof(real)));
-	CudaSafeCall(cudaBindTexture( NULL, texErrs, devErr[1], rSize*movieSize*sizeof(real)));
+	CudaSafeCall(cudaBindTexture( NULL, texErrp, devErr[0], rSize*movieSize*sizeof(float)));
+	CudaSafeCall(cudaBindTexture( NULL, texErrs, devErr[1], rSize*movieSize*sizeof(float)));
 	cudaFuncSetCacheConfig(cudaFindMinKernel, cudaFuncCachePreferShared);
 	cudaFindMinKernel<<<movieSize, THREADS, 0, 0>>>(devMedian[1], devMedian[0], devOut, rSize);
 	CudaSafeCall(cudaMemcpy(out, devOut, movieSize*sizeof(int), cudaMemcpyDeviceToHost));

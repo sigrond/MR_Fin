@@ -1,2 +1,2 @@
-void GeneratePattern(real *   II, real *  r, const int sizeR, real complex const * const m,
-		real *   theta, const int sizeTheta ,real redWavelength, real greenWavelength, int polarization ,int pattern_length);
+void GeneratePattern(float *   II, float *  r, const int sizeR, std::complex<float> const * const m,
+		float *   theta, const int sizeTheta ,float redWavelength, float greenWavelength, int polarization ,int pattern_length);
