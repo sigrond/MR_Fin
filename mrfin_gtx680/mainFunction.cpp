@@ -25,6 +25,8 @@
 
 using namespace std;
 
+extern bool noRunningRadius;
+
 void mainFunction() {
 	double init;
 	startTimer(init);
@@ -191,21 +193,24 @@ void mainFunction() {
 	float * Ts  = new float[sizeTs];
 	float * rrp = new float[sizeTp];
 	float * rrs = new float[sizeTs];
-	//#pragma omp parallel sections //TODO: sprawdzic czy to cos przyspiesza (04.04.13 by szmigacz)
-	//{
-	//#pragma omp section
-	//{
-	for(int i=0;i<sizeTp;++i)
-		Tp[i]=atan ( tan( mTp[i] - M_PI*0.5 ) * scale ) + M_PI*0.5 + shiftR;
-	RunningRadius( rrp, Tp, sizeTp, hccd_max_R, diafragma, wavelengthR );
-	//}
-	//#pragma omp section
-	//{
-	for(int i=0;i<sizeTs;++i)
-		Ts[i]=atan ( tan( mTs[i] - M_PI*0.5 ) * scale ) + M_PI*0.5 + shiftG;
-	RunningRadius( rrs, Ts, sizeTs, hccd_max_G, diafragma, wavelengthG ); 
-	//}
-	//}
+	if (!noRunningRadius)
+	{
+		//#pragma omp parallel sections //TODO: sprawdzic czy to cos przyspiesza (04.04.13 by szmigacz)
+		//{
+		//#pragma omp section
+		//{
+		for (int i = 0; i < sizeTp; ++i)
+			Tp[i] = atan(tan(mTp[i] - M_PI*0.5) * scale) + M_PI*0.5 + shiftR;
+		RunningRadius(rrp, Tp, sizeTp, hccd_max_R, diafragma, wavelengthR);
+		//}
+		//#pragma omp section
+		//{
+		for (int i = 0; i < sizeTs; ++i)
+			Ts[i] = atan(tan(mTs[i] - M_PI*0.5) * scale) + M_PI*0.5 + shiftG;
+		RunningRadius(rrs, Ts, sizeTs, hccd_max_G, diafragma, wavelengthG);
+		//}
+		//}
+	}
 
 	for(int i=0; i<sizeTp; i++) 
 		if( rrp[i]!=rrp[i] ) rrp[i]=1.0;
@@ -239,12 +244,15 @@ void mainFunction() {
 	Tp=0;
 	Ts=0;
 	stopTimer("CZAS GENERATE PATTERN", init);
-	for(int i=0;i<rSize;++i)
-		for(int j=0;j<sizeTp;++j)
-			Ittp[i*sizeTp+j]*=rrp[j];
-	for(int i=0;i<rSize;++i)
-		for(int j=0;j<sizeTs;++j)
-			Itts[i*sizeTs+j]*=rrs[j];
+	if (noRunningRadius)
+	{
+		for (int i = 0; i < rSize; ++i)
+			for (int j = 0; j < sizeTp; ++j)
+				Ittp[i*sizeTp + j] *= rrp[j];
+		for (int i = 0; i < rSize; ++i)
+			for (int j = 0; j < sizeTs; ++j)
+				Itts[i*sizeTs + j] *= rrs[j];
+	}
 	delete [] rrp;
 	delete [] rrs;
 	rrs=rrp=0;

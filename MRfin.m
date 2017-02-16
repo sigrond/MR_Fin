@@ -370,7 +370,8 @@ if handles.C
     save_setup; %KOD DO C
     pause(0.1);
     TT=tic;
-    [status,result] = system('client.exe'); %KOD DO C
+    noRunningRadius=0;
+    [status,result] = system(sprintf('client.exe %d',noRunningRadius)); %KOD DO C
     czas=toc(TT)
 end
 

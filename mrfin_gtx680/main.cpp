@@ -21,6 +21,9 @@
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
+bool noRunningRadius=false;
+
+
 int main()
 {
 	int sock, msgsock, rval;
@@ -98,6 +101,12 @@ int main()
 				printf("Ending connection\n");
 			else{
 				double init = omp_get_wtime();
+				if (buf[0] == 0)
+					noRunningRadius = 0;
+				else if (buf[0] == 1)
+					noRunningRadius = 1;
+				else
+					printf("buf[0]=%d, noRunniongRadius=%d\n", buf[0], noRunningRadius);
 				mainFunction();
 				printf("%f LACZNY CZAS\n", omp_get_wtime() - init);
 				if (send(msgsock, dummy, sizeof(int),0) < 0 )
