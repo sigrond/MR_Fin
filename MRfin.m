@@ -45,6 +45,44 @@ end
 %==============My fynctions==============================
 function rad = deg2rad( deg )
 rad = pi*deg/180;
+%-----
+function handles = Old_data(handles)
+% Reading data from "base" workspase
+    handles.Ipp = evalin('base','Ipp');
+    handles.Iss = evalin('base','Iss');
+    handles.theta = evalin('base','theta');
+    handles.setup = evalin('base','setup');
+    
+    set( handles.edFrame_End,'string', num2str( size( handles.Ipp,1 ) ) );
+    set( handles.edFrame_Step,'string', '100' );
+% Parameters of  the laser beams
+    handles.Wr.wavelength = 654.25;
+    handles.Wr.theta = 0;
+    handles.Wr.polarization = 0;
+
+    handles.Wg.wavelength = 532.07;
+    handles.Wg.polarization = 1;
+    handles.Wg.theta = pi;
+
+handles.Tp = atan( tan( handles.theta.mTp - pi / 2 ) *...
+                   str2num( get( handles.edScale,'string' ) ) ) + pi/2 +...
+                   deg2rad( str2num( get( handles.edShift_R,'string' ) ) );
+handles.Ts = atan( tan( handles.theta.mTs - pi / 2 ) *...
+                   str2num( get( handles.edScale,'string' ) ) ) + pi/2 +...
+                   deg2rad( str2num( get( handles.edShift_G,'string' ) ) );
+handles.rrp = ( running_radius( abs( handles.Tp - pi/2 ),...
+                handles.setup.hccd_max_R, handles.setup.Diafragma, handles.Wr.wavelength ) ) .^ 2;
+handles.rrs = ( running_radius(abs(handles.Ts-pi/2),...
+                handles.setup.hccd_max_G, handles.setup.Diafragma, handles.Wg.wavelength ) ).^2;
+
+handles.mr = Calculate_m(23,handles.Wr.wavelength,'EG');
+handles.mg = Calculate_m(23,handles.Wg.wavelength,'EG');
+handles.r = 1e3:20:15e3;
+handles.ind = 1:100:size( handles.Ipp,1 );
+set(handles.te_m_red,'string',['m_r = ' num2str( handles.mr )]);
+set(handles.te_m_green,'string',['m_g = ' num2str( handles.mg )]);
+set(handles.uipanel1,'title',handles.setup.FileName);
+%-----
 %==============My fynctions==============================
 
 % --- Executes just before MRfin is made visible.
@@ -121,6 +159,87 @@ set(handles.te_m_red2,'string',['m_r = ' num2str( handles.mr2 )]);
 set(handles.te_m_green2,'string',['m_g = ' num2str( handles.mg2 )]);
 
 set(handles.uipanel1,'title',handles.setup.FileName);
+
+W = evalin('base','who');
+
+if ( ismember('Ipp', W)*...
+     ismember('Iss', W)*...
+     ismember('setup', W)*...
+     ismember('theta', W) ) == 1 % The old data is detected
+    handles = Old_data(handles);
+elseif ( ismember('I_R',W) ||...
+         ismember('I_G',W) ||...
+         ismember('I_B',W) ) % The new data is detected
+     
+     if ismember('IppConv',W)
+         handles.Ipp = evalin('base','IppConv');
+         handles.Iss = evalin('base','IssConv');
+         out = evalin('base','out');
+     else
+         out = New_Old_Data_Converter;
+     end
+    
+    
+   
+   handles.theta = out.theta;
+   handles.Tp = out.theta.mTp;
+   handles.Ts = out.theta.mTs;
+   % Parameters of  the laser beams
+   handles.Wr = out.Wr;
+   handles.Wg = out.Wg;
+   handles.mr = Calculate_m(23,handles.Wr.wavelength,'EG');
+   handles.mg = Calculate_m(23,handles.Wg.wavelength,'EG');
+   
+   
+   
+   handles.setup.FileName  = 'FN';
+   handles.setup.hccd_max_R = 0.0026;
+   handles.setup.hccd_max_G = 0.0027;
+   handles.setup.Diafragma = 0.0098;
+   handles.rrp = ( running_radius( abs( handles.Tp - pi/2 ),...
+                handles.setup.hccd_max_R, handles.setup.Diafragma, handles.Wr.wavelength ) ) .^ 2;
+   handles.rrs = ( running_radius(abs(handles.Ts-pi/2),...
+                handles.setup.hccd_max_G, handles.setup.Diafragma, handles.Wg.wavelength ) ).^2;
+            %% temp 
+            indNan = find(isnan(handles.rrp));
+            handles.rrp(indNan) = (handles.rrp(indNan-1)+handles.rrp(indNan+1))/2;
+            indNan = find(isnan(handles.rrs));
+            handles.rrs(indNan) = (handles.rrs(indNan-1)+handles.rrs(indNan+1))/2;
+            %% end temp
+   
+if ~ismember('IppConv',W)
+    wb = waitbar(0,'Calculating...');
+   handles.Ipp = zeros(size(out.Ipp));
+   handles.Iss = zeros(size(out.Iss));
+
+   for in = 1 : size(out.Ipp,1)         
+       waitbar(in/size(out.Ipp,1),wb);
+       handles.Ipp(in,:) = out.Ipp(in,:);%./handles.rrp;
+       handles.Iss(in,:) = out.Iss(in,:);%./handles.rrs;
+   end
+   close(wb);
+   assignin('base','IppConv',handles.Ipp);
+   assignin('base','IssConv',handles.Iss);
+   assignin('base','theta',handles.theta );
+   assignin('base','setup',handles.setup );
+   assignin('base','out',out );
+end
+
+   set(handles.te_m_red,'string',['m_r = ' num2str( handles.mr )]);
+   set(handles.te_m_green,'string',['m_g = ' num2str( handles.mg )]);
+   set( handles.edFrame_End,'string', num2str( size( handles.Ipp,1 ) ) );
+   set( handles.edFrame_Step,'string', '100' );
+   handles.r = 1e3:20:15e3;
+   handles.ind = 1:100:size( handles.Ipp,1 );
+%    assignin('base','setup',setup)
+
+else
+    s = sprintf('There is no appropriate data in the "base" workspace!');
+    he = warndlg( s );
+    uiwait( he );
+    
+end
+
 if handles.C
     save_workspace;         % KOD C
 end
@@ -372,6 +491,10 @@ if handles.C
     TT=tic;
     noRunningRadius=0;
     [status,result] = system(sprintf('client.exe %d',noRunningRadius)); %KOD DO C
+    if size(strfind(result,'error'),1)~=0
+        [status,result] = system(sprintf('START mrfin_gtx680.exe'))
+        [status,result] = system(sprintf('client.exe %d',noRunningRadius))
+    end
     czas=toc(TT)
 end
 
