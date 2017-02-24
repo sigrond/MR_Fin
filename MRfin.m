@@ -91,6 +91,14 @@ function MRfin_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.C=1;   % Kontola tego czy ma wykonywac sie kod C, C=1 TAK, C=0 NIE
 
 handles.output = hObject;
+
+W = evalin('base','who');
+
+if ( ismember('Ipp', W)*...
+     ismember('Iss', W)*...
+     ismember('setup', W)*...
+     ismember('theta', W) ) == 1 % The old data is detected
+
 try
     handles.Ipp = evalin('base','Ipp');
     handles.Iss = evalin('base','Iss');
@@ -160,12 +168,7 @@ set(handles.te_m_green2,'string',['m_g = ' num2str( handles.mg2 )]);
 
 set(handles.uipanel1,'title',handles.setup.FileName);
 
-W = evalin('base','who');
 
-if ( ismember('Ipp', W)*...
-     ismember('Iss', W)*...
-     ismember('setup', W)*...
-     ismember('theta', W) ) == 1 % The old data is detected
     handles = Old_data(handles);
 elseif ( ismember('I_R',W) ||...
          ismember('I_G',W) ||...
